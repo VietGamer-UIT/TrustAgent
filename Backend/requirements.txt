@@ -1,0 +1,15 @@
+fastapi
+uvicorn
+langgraph
+langchain
+langchain-google-genai
+z3-solver
+sqlalchemy
+psycopg[binary]
+python-dotenv
+pydantic
+requests
+beautifulsoup4
+Faker
+playwright
+loguru
