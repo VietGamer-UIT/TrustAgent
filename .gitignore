@@ -28,8 +28,7 @@ env.bak/
 venv.bak/
 
 # Project specific
-TaxLens-AI/
-TrustAgent-Forensics/
-Backend/data_pipeline/invoices/
-Backend/rag/legal_data/
+Backend/FastAPI/data_pipeline/invoices/
+Backend/FastAPI/rag/legal_data/
+node_modules/
 node_modules/
