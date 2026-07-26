@@ -32,3 +32,4 @@ TaxLens-AI/
 TrustAgent-Forensics/
 Backend/data_pipeline/invoices/
 Backend/rag/legal_data/
+node_modules/

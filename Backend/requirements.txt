@@ -1,15 +1,68 @@
-fastapi
-uvicorn
-langgraph
-langchain
-langchain-google-genai
-z3-solver
-sqlalchemy
-psycopg[binary]
-python-dotenv
-pydantic
-requests
-beautifulsoup4
-Faker
-playwright
-loguru
+﻿# =============================================================================
+# ThreatLens-IR :: Python Dependencies
+
+# â”€â”€ Core web framework â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+python-multipart>=0.0.9
+# â”€â”€ LangGraph / LangChain multi-agent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+langgraph>=0.1.0
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-google-genai>=1.0.1
+google-generativeai>=0.8.0
+# â”€â”€ Pydantic v2 (MCP server validation) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+pydantic>=2.7.0
+# â”€â”€ Async PostgreSQL â€” Audit Trail (COMMIT 3) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+sqlalchemy[asyncio]>=2.0.28
+asyncpg>=0.29.0             # PostgreSQL asyncio driver (used by asyncpg URL scheme)
+alembic>=1.13.0             # DB migration management
+# â”€â”€ HTTP clients (live MCP calls â€” uncomment mocks to use) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+aiohttp>=3.9.0
+httpx>=0.27.0
+# â”€â”€ Typing backport â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+typing-extensions>=4.11.0
+# â”€â”€ Environment & config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+python-dotenv>=1.0.1
+# â”€â”€ Dev / CI tooling (not needed at runtime) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+ruff>=0.4.0
+pytest>=8.1.0
+pytest-asyncio>=0.23.0
+# TrustAgent.Forensics â€” Dependencies (Phase 1â€“4)
+# Install: pip install -r requirements.txt
+# Python: 3.12+
+# â”€â”€ Phase 1: Z3 Symbolic Engine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+z3-solver>=4.12.0
+# â”€â”€ Phase 1â€“2: Data Validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+pydantic>=2.5
+pydantic-settings>=2.2
+python-dotenv>=1.0
+# â”€â”€ Phase 2: Gemini LLM (optional) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# google-genai>=1.0
+# google-generativeai>=0.8
+# â”€â”€ Phase 3: LangGraph Multi-Agent (optional) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# langgraph>=0.4.0
+# â”€â”€ Phase 3.5: Legal RAG (optional) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# chromadb>=0.5.0  (náº¿u muá»‘n ChromaDB semantic search)
+# â”€â”€ Phase 4: FastAPI REST API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+fastapi>=0.115
+uvicorn[standard]>=0.32
+starlette>=1.0
+# â”€â”€ Phase 4: Database (SQLite cho dev, PostgreSQL cho production) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+sqlalchemy[asyncio]>=2.0
+aiosqlite>=0.19           # SQLite async driver (dev/test)
+# asyncpg>=0.30           # PostgreSQL async driver (production, uncommit nÃ y)
+# â”€â”€ Testing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+pytest>=8.0
+pytest-asyncio>=0.24
+httpx>=0.28               # HTTP test client cho FastAPI
+loguru==0.7.2
+requests==2.31.0
+beautifulsoup4==4.12.2
+playwright==1.40.0
+playwright-stealth==1.0.6
+SQLAlchemy==2.0.23
+asyncpg==0.29.0
+pydantic==2.5.3
+signxml==3.2.0
+rich==13.7.0

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<HDon xmlns="http://vanthu.gov.vn/hdon">
+    <DLHDon>
+        <TTChung>
+            <KHHDon>1C26TML</KHHDon>
+            <SHDon>0000123</SHDon>
+            <NLap>2026-07-24T10:00:00</NLap>
+        </TTChung>
+        <NDHDon>
+            <NBan>
+                <Ten>CÔNG TY TNHH CÔNG NGHỆ TRUSTAGENT</Ten>
+                <MST>0101248141</MST>
+            </NBan>
+            <NMua>
+                <Ten>CÔNG TY CP TẬP ĐOÀN ĐỐI TÁC</Ten>
+                <MST>0309532909</MST>
+            </NMua>
+            <TToan>
+                <TgTCThue>1000000.00</TgTCThue>
+                <TgTThue>80000.00</TgTThue>
+                <!-- Tạo lỗi số học giả để test: 1080000 != 1080500 -->
+                <TgTTTBSo>1080500.00</TgTTTBSo>
+            </TToan>
+        </NDHDon>
+    </DLHDon>
+    <Signature xmlns="http://www.w3.org/2000/09/xmldsig#">
+        <SignedInfo>...</SignedInfo>
+        <SignatureValue>XYZ123...</SignatureValue>
+        <!-- Tạo lỗi TimeSync giả để test: Ký sau 2 ngày -->
+        <SigningTime>2026-07-26T15:00:00</SigningTime>
+    </Signature>
+</HDon>
