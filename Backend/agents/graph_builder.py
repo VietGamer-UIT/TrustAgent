@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: LangGraph Xây Dựng Đồ Thị Kiểm Tra Chứng Từ
-# Bản quyền: TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: LangGraph Xây Dựng Đồ Thị Kiểm Tra Chứng Từ
+# Bản quyền: TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Xây dựng và biên dịch StateGraph cho luồng kiểm tra chứng từ đa tác nhân.
 #
@@ -32,7 +32,7 @@ from .supervisor import supervisor_node
 from .chung_tu_agent import chung_tu_agent_node
 from .tuan_thu_agent import tuan_thu_agent_node
 
-logger = logging.getLogger("taxlens.graph")
+logger = logging.getLogger("trustagent.graph")
 
 # ---------------------------------------------------------------------------
 # Tên node (nguồn chân lý duy nhất — tránh lỗi chính tả)
@@ -87,7 +87,7 @@ def build_ir_graph() -> StateGraph:
     Returns:
         StateGraph đã biên dịch, sẵn sàng cho .invoke() / .ainvoke().
     """
-    logger.info("[GraphBuilder] Đang xây dựng đồ thị TaxLens-AI...")
+    logger.info("[GraphBuilder] Đang xây dựng đồ thị TrustAgent...")
 
     # 1. Khởi tạo graph
     graph = StateGraph(TrangThaiKiemTra)
@@ -145,7 +145,7 @@ if __name__ == "__main__":
     async def _chay_demo():
         """Smoke test toàn bộ luồng kiểm tra chứng từ."""
         print("\n" + "=" * 70)
-        print("  TaxLens-AI — Kiểm Thử Hệ Thống Đa Tác Nhân")
+        print("  TrustAgent — Kiểm Thử Hệ Thống Đa Tác Nhân")
         print("=" * 70)
 
         do_thi = build_ir_graph()

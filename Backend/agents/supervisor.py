@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: Giám Sát Agent (Supervisor)
-# Bản quyền: TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Giám Sát Agent (Supervisor)
+# Bản quyền: TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Giám Sát là bộ điều phối trung tâm của luồng LangGraph kiểm tra chứng từ.
 #
@@ -26,7 +26,7 @@ from typing import Any
 
 from .state import TrangThaiKiemTra
 
-logger = logging.getLogger("taxlens.agents.supervisor")
+logger = logging.getLogger("trustagent.agents.supervisor")
 
 # ---------------------------------------------------------------------------
 # Hằng số
@@ -346,7 +346,7 @@ def _tao_tom_tat(
     so_cao = sum(1 for c in canh_bao if c.get("muc_do") == "cao")
 
     return (
-        f"[TaxLens-AI] Phiên kiểm tra {ma_phien} đã {trang_thai.upper()}. "
+        f"[TrustAgent] Phiên kiểm tra {ma_phien} đã {trang_thai.upper()}. "
         f"Mức độ rủi ro tổng thể: {muc_do.upper()}. "
         f"Phát hiện {len(canh_bao)} cảnh báo "
         f"({so_nghiem_trong} nghiêm trọng, {so_cao} cao). "

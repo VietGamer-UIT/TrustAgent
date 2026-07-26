@@ -5,7 +5,7 @@ import { Activity } from 'lucide-react'
 
 // Vietnamese breadcrumb labels
 const ROUTE_LABELS: Record<string, { title: string; subtitle: string }> = {
-  '/':           { title: 'Bảng Điều Khiển',       subtitle: 'Tổng quan hệ thống TaxLens-AI' },
+  '/':           { title: 'Bảng Điều Khiển',       subtitle: 'Tổng quan hệ thống TrustAgent' },
   '/investigate':{ title: 'Kiểm Tra Chứng Từ',      subtitle: 'Phát hiện lỗi hóa đơn & gian lận tài chính' },
   '/audit':      { title: 'Nhật Ký Kiểm Toán',     subtitle: 'Lịch sử sự kiện hệ thống bất biến' },
 }

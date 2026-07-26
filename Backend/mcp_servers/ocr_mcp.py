@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: OCR MCP Server — Đọc Hóa Đơn / Chứng Từ bằng Gemini Vision
-# Bản quyền: TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: OCR MCP Server — Đọc Hóa Đơn / Chứng Từ bằng Gemini Vision
+# Bản quyền: TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Tích hợp google-generativeai (Gemini 1.5 Flash) để OCR hóa đơn thật.
 #
@@ -30,7 +30,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, StrictStr, field_validator
 
-logger = logging.getLogger("taxlens.mcp.ocr")
+logger = logging.getLogger("trustagent.mcp.ocr")
 
 # ---------------------------------------------------------------------------
 # MCP Tool Registry
@@ -273,7 +273,7 @@ _DU_LIEU_MOCK_FALLBACK: dict[str, Any] = {
     "is_valid": True,
     "so_hoa_don": "HD-DEMO-001",
     "ngay_xuat": "2024-06-01",
-    "ten_nguoi_ban": "Công ty TNHH Demo TaxLens",
+    "ten_nguoi_ban": "Công ty TNHH Demo TrustAgent",
     "mst_nguoi_ban": "0312345678",
     "dia_chi_nguoi_ban": "123 Nguyễn Huệ, Quận 1, TP.HCM",
     "ten_nguoi_mua": "Công ty CP Kiểm Toán ABC",
@@ -295,7 +295,7 @@ _DU_LIEU_HOP_DONG_FALLBACK: dict[str, Any] = {
     "ngay_ky": "2024-05-01",
     "ben_a": "Công ty CP Kiểm Toán ABC",
     "mst_ben_a": "0301234567",
-    "ben_b": "Công ty TNHH Demo TaxLens",
+    "ben_b": "Công ty TNHH Demo TrustAgent",
     "mst_ben_b": "0312345678",
     "gia_tri": 55_000_000,
     "noi_dung": "[DEMO MODE - Không có GOOGLE_API_KEY]",

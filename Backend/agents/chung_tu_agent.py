@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: Chứng Từ Agent (Document Agent)
-# Bản quyền: TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Chứng Từ Agent (Document Agent)
+# Bản quyền: TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Agent chuyên trách đọc và phân tích hóa đơn/hợp đồng.
 #
@@ -29,7 +29,7 @@ from ..mcp_servers.ocr_mcp import (
     doc_nhan_hoa_don, DocHoaDonInput,
 )
 
-logger = logging.getLogger("taxlens.agents.chung_tu")
+logger = logging.getLogger("trustagent.agents.chung_tu")
 
 MAX_THU_LAI: int = 3
 TEN_AGENT: str = "chung_tu_agent"

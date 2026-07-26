@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: Audit Trail — Middleware & Decorator
-# Copyright: TaxLens-AI by Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Audit Trail — Middleware & Decorator
+# Copyright: TrustAgent by Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Two complementary capture mechanisms:
 #
@@ -46,7 +46,7 @@ from starlette.types import ASGIApp
 from .database import AsyncSessionFactory
 from .models import AgentName, AuditEvent, EventStatus, EventType
 
-logger = logging.getLogger("taxlens.audit.middleware")
+logger = logging.getLogger("trustagent.database.middleware")
 
 # ---------------------------------------------------------------------------
 # Sensitive key redaction (GDPR / security hygiene)

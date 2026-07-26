@@ -1,6 +1,6 @@
 // =============================================================================
-// TaxLens-AI :: Global Type Declarations
-// Copyright: TaxLens-AI by Đoàn Hoàng Việt (Việt Gamer)
+// TrustAgent :: Global Type Declarations
+// Copyright: TrustAgent by Đoàn Hoàng Việt (Việt Gamer)
 // =============================================================================
 // This file shims the global `process` object for the TypeScript language
 // server BEFORE `npm install` runs and @types/node becomes available.

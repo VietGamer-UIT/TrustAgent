@@ -118,7 +118,7 @@ export default function DashboardPage() {
               </Badge>
             </div>
             <h1 className="text-2xl font-bold text-foreground">
-              TaxLens
+              TrustAgent
               <span className="text-primary">-AI</span>
             </h1>
             <p className="mt-1 max-w-lg text-sm text-muted-foreground leading-relaxed">

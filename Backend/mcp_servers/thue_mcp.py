@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: Thuế MCP Server — Tra Cứu Mã Số Thuế & Hóa Đơn Điện Tử
-# Bản quyền: TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Thuế MCP Server — Tra Cứu Mã Số Thuế & Hóa Đơn Điện Tử
+# Bản quyền: TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Mô phỏng API Tổng cục Thuế (gdt.gov.vn) và hệ thống tra cứu hóa đơn
 # (tracuuhoadon.gdt.gov.vn).
@@ -23,7 +23,7 @@ from typing import Any, Callable
 
 from pydantic import BaseModel, Field, StrictStr, model_validator
 
-logger = logging.getLogger("taxlens.mcp.thue")
+logger = logging.getLogger("trustagent.mcp.thue")
 
 # ---------------------------------------------------------------------------
 # Registry

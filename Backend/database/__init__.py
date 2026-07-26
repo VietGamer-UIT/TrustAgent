@@ -1,5 +1,5 @@
 # =============================================================================
-# TaxLens-AI :: Audit Trail Package
+# TrustAgent :: Audit Trail Package
 # =============================================================================
 from .database import Base, AsyncSessionFactory, engine, init_db, close_db, get_audit_session
 from .models import AuditEvent, EventType, AgentName, EventStatus

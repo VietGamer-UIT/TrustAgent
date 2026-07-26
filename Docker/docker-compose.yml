@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: Docker Compose — Backend + PostgreSQL
-# Copyright: TaxLens-AI by Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Docker Compose — Backend + PostgreSQL
+# Copyright: TrustAgent by Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Services:
 #   db       : PostgreSQL 16 (audit trail persistence)
@@ -77,7 +77,7 @@ services:
       target: runtime # Only build the final runtime stage
 
     container_name: taxlens_backend
-    image: taxlens-ai-backend:latest
+    image: trustagent-backend:latest
 
     # Environment variables — sourced from .env file (never commit .env to git)
     environment:
@@ -140,7 +140,7 @@ services:
       dockerfile: ../DevOps/Docker/Dockerfile.frontend
 
     container_name: taxlens_frontend
-    image: taxlens-ai-frontend:latest
+    image: trustagent-frontend:latest
 
     environment:
       NODE_ENV: production

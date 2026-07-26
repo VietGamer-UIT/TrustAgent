@@ -1,10 +1,10 @@
 # =============================================================================
-# TaxLens-AI :: Audit Trail — ORM Models
-# Copyright: TaxLens-AI by Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Audit Trail — ORM Models
+# Copyright: TrustAgent by Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Defines the SQLAlchemy ORM model for the audit_events table.
 # Captures every agent action, tool call, routing decision, and
-#   LLM token consumption in the TaxLens-AI system.
+#   LLM token consumption in the TrustAgent system.
 #
 # SANS FIND EVIL criterion :
 #   - Every row is append-only (no UPDATE/DELETE paths in the codebase).

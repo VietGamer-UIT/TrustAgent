@@ -1,5 +1,5 @@
 # =============================================================================
-# TaxLens-AI :: MCP Servers Package
+# TrustAgent :: MCP Servers Package
 # =============================================================================
 # Registry thống nhất cho tất cả MCP tool servers.
 #

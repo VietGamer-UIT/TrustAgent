@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: Thuế DB MCP Server — Tra Cứu MST từ Local Cache
-# Bản quyền: TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Thuế DB MCP Server — Tra Cứu MST từ Local Cache
+# Bản quyền: TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # MCP Server tra cứu MST từ PostgreSQL nội bộ (Local Data Cache).
 # Thay vì gọi API Tổng cục Thuế qua mạng, agent tra cứu bảng
@@ -24,7 +24,7 @@ from typing import Any, Callable
 
 from pydantic import BaseModel, Field, StrictStr, model_validator
 
-logger = logging.getLogger("taxlens.mcp.thue_db")
+logger = logging.getLogger("trustagent.mcp.thue_db")
 
 # ---------------------------------------------------------------------------
 # Registry
@@ -62,7 +62,7 @@ async def _query_mst_from_db(mst: str) -> dict[str, Any] | None:
     Trả None nếu không tìm thấy hoặc DB không khả dụng.
     """
     try:
-        from ..audit.database import AsyncSessionFactory
+        from ..database.database import AsyncSessionFactory
         from ..data_pipeline.models_pipeline import DoanNghiep
         from sqlalchemy import select
 

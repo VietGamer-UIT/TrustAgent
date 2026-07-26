@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: FastAPI Entry Point — Trợ Lý Ảo Phát Hiện Lỗi Chứng Từ
-# Bản quyền: TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: FastAPI Entry Point — Trợ Lý Ảo Phát Hiện Lỗi Chứng Từ
+# Bản quyền: TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Kết nối:
 #   - AuditMiddleware  (ghi nhật ký HTTP → PostgreSQL)
@@ -26,10 +26,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from .audit.database import init_db, close_db
-from .audit.middleware import AuditMiddleware, set_audit_context
-from .ir_agents import TrangThaiKiemTra, build_ir_graph
-from .data_pipeline.lich_cao import khoi_dong_pipeline, lay_trang_thai
+from database.database import init_db, close_db
+from database.middleware import AuditMiddleware, set_audit_context
+from core.state import TrustAgentState
+from core.supervisor import build_trustagent_graph
+# from data_pipeline.lich_cao import khoi_dong_pipeline, lay_trang_thai
 
 # ---------------------------------------------------------------------------
 # Thư mục lưu tạm file upload
@@ -54,7 +55,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
 )
-logger = logging.getLogger("taxlens.main")
+logger = logging.getLogger("trustagent.main")
 
 
 # ---------------------------------------------------------------------------
@@ -68,23 +69,23 @@ async def lifespan(app: FastAPI):
     - Startup  : Khởi tạo bảng PostgreSQL, biên dịch graph.
     - Shutdown : Giải phóng connection pool.
     """
-    logger.info("[Khởi động] TaxLens-AI đang khởi tạo...")
+    logger.info("[Khởi động] TrustAgent đang khởi tạo...")
 
     await init_db()
     logger.info("[Khởi động] Audit DB sẵn sàng.")
 
-    app.state.ir_graph = build_ir_graph()
-    logger.info("[Khởi động] LangGraph đồ thị kiểm tra chứng từ đã biên dịch.")
+    app.state.trustagent_graph = build_trustagent_graph()
+    logger.info("[Khởi động] Đồ thị kiểm tra TrustAgent đã nạp.")
 
     # Khởi động Data Pipeline — nạp seed data MST vào PostgreSQL
-    await khoi_dong_pipeline()
+    # await khoi_dong_pipeline()
     logger.info("[Khởi động] Data Pipeline (Local MST Cache) đã khởi động.")
 
     yield
 
     logger.info("[Tắt] Đang giải phóng database engine...")
     await close_db()
-    logger.info("[Tắt] TaxLens-AI đã tắt sạch.")
+    logger.info("[Tắt] TrustAgent đã tắt sạch.")
 
 
 # ---------------------------------------------------------------------------
@@ -92,9 +93,9 @@ async def lifespan(app: FastAPI):
 # ---------------------------------------------------------------------------
 
 app = FastAPI(
-    title="TaxLens-AI — Trợ Lý Ảo Phát Hiện Lỗi Chứng Từ",
+    title="TrustAgent — Trợ Lý Ảo Phát Hiện Lỗi Chứng Từ",
     description=(
-        "TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer). "
+        "TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer). "
         "Nền tảng AI đa tác nhân phát hiện lỗi chứng từ, hóa đơn "
         "và gian lận tài chính cho ngành kiểm toán Việt Nam. "
         "Sử dụng LangGraph, MCP Servers và PostgreSQL Audit Trail."
@@ -168,7 +169,7 @@ class KetQuaKiemTra(BaseModel):
 @app.get("/health", tags=["ops"], summary="Kiểm tra trạng thái")
 async def health() -> dict[str, str]:
     """Health check — 200 OK khi ứng dụng đang chạy."""
-    return {"status": "ok", "service": "TaxLens-AI"}
+    return {"status": "ok", "service": "TrustAgent"}
 
 
 @app.post(
@@ -195,13 +196,17 @@ async def kiem_tra_chung_tu(request: YeuCauKiemTra) -> KetQuaKiemTra:
         graph_run_id=graph_run_id,
     )
 
-    initial_state: TrangThaiKiemTra = {
-        "ma_phien":            request.ma_phien,
-        "duong_dan_chung_tu":  request.duong_dan_chung_tu or ["/hoa_don/tat_ca.pdf"],
+    initial_state: TrustAgentState = {
+        "incident_id":         request.ma_phien,
+        "user_prompt":         "",
+        "evidence_paths":      request.duong_dan_chung_tu or ["/hoa_don/tat_ca.pdf"],
+        "extracted_data":      {},
+        "scenario_type":       "full_audit",
+        "tax_warnings":        [],
+        "z3_status":           None,
+        "legal_violations":    [],
+        "final_audit_log":     {},
         "messages":            [],
-        "error_log":           [],
-        "retry_count":         0,
-        "iteration_count":     0,
     }
 
     logger.info(
@@ -210,7 +215,7 @@ async def kiem_tra_chung_tu(request: YeuCauKiemTra) -> KetQuaKiemTra:
     )
 
     try:
-        final_state: TrangThaiKiemTra = await app.state.ir_graph.ainvoke(initial_state)
+        final_state: TrustAgentState = await app.state.trustagent_graph.ainvoke(initial_state)
     except Exception as exc:
         logger.exception("[API] Graph thất bại cho phiên=%s", request.ma_phien)
         raise HTTPException(
@@ -218,7 +223,7 @@ async def kiem_tra_chung_tu(request: YeuCauKiemTra) -> KetQuaKiemTra:
             detail=f"Kiểm tra chứng từ thất bại: {type(exc).__name__}: {exc}",
         )
 
-    report: dict[str, Any] = final_state.get("bao_cao_kiem_tra", {})
+    report: dict[str, Any] = final_state.get("final_audit_log", {})
 
     return KetQuaKiemTra(
         graph_run_id=graph_run_id,
@@ -336,17 +341,21 @@ async def kiem_tra_upload(
     # ── 4. Gọi LangGraph pipeline ──────────────────────────────────────────
     set_audit_context(incident_id=ma_phien_thuc, graph_run_id=graph_run_id)
 
-    initial_state: TrangThaiKiemTra = {
-        "ma_phien":           ma_phien_thuc,
-        "duong_dan_chung_tu": [str(duong_dan_luu)],  # đường dẫn file thật
-        "messages":           [],
-        "error_log":          [],
-        "retry_count":        0,
-        "iteration_count":    0,
+    initial_state: TrustAgentState = {
+        "incident_id":         ma_phien_thuc,
+        "user_prompt":         "",
+        "evidence_paths":      [str(duong_dan_luu)],  # Đường dẫn file thật
+        "extracted_data":      {},
+        "scenario_type":       "full_audit",
+        "tax_warnings":        [],
+        "z3_status":           None,
+        "legal_violations":    [],
+        "final_audit_log":     {},
+        "messages":            [],
     }
 
     try:
-        final_state: TrangThaiKiemTra = await app.state.ir_graph.ainvoke(initial_state)
+        final_state: TrustAgentState = await app.state.trustagent_graph.ainvoke(initial_state)
     except Exception as exc:
         # Dọn dẹp file tạm nếu pipeline thất bại
         try:
@@ -365,7 +374,7 @@ async def kiem_tra_upload(
     # except OSError:
     #     pass
 
-    report: dict[str, Any] = final_state.get("bao_cao_kiem_tra", {})
+    report: dict[str, Any] = final_state.get("final_audit_log", {})
 
     return KetQuaKiemTra(
         graph_run_id=graph_run_id,
@@ -393,8 +402,8 @@ async def get_audit_events(
     Mỗi sự kiện được ghi bất biến vào PostgreSQL với SHA-256 hash.
     """
     from sqlalchemy import select, desc
-    from .audit.database import AsyncSessionFactory
-    from .audit.models import AuditEvent
+    from database.database import AsyncSessionFactory
+    from database.models import AuditEvent
 
     async with AsyncSessionFactory() as session:
         result = await session.execute(
@@ -435,7 +444,7 @@ async def tra_cuu_mst_endpoint(mst: str) -> dict[str, Any]:
     Tra cứu thông tin doanh nghiệp theo MST từ local PostgreSQL cache.
     Latency < 5ms nhờ tra cứu nội bộ, không cần kết nối API Tổng cục Thuế.
     """
-    from .mcp_servers.thue_db_mcp import tra_cuu_mst_local, TraCuuMSTLocalInput
+    from mcp_servers.thue_db_mcp import tra_cuu_mst_local, TraCuuMSTLocalInput
 
     try:
         result = await tra_cuu_mst_local(TraCuuMSTLocalInput(mst=mst))
@@ -457,4 +466,4 @@ async def trang_thai_pipeline() -> dict[str, Any]:
     Trả về trạng thái hiện tại của Data Pipeline.
     Bao gồm: tổng bản ghi, số đang HĐ, số ngừng HĐ, lần chạy cuối.
     """
-    return lay_trang_thai()
+    return {}

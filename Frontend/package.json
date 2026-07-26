@@ -1,7 +1,7 @@
 {
-  "name": "taxlens-ai-frontend",
+  "name": "trustagent-frontend",
   "version": "1.0.0",
-  "description": "TaxLens-AI by Đoàn Hoàng Việt (Việt Gamer) — IR Dashboard Frontend",
+  "description": "TrustAgent by Đoàn Hoàng Việt (Việt Gamer) — IR Dashboard Frontend",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3000",

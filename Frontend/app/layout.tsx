@@ -18,11 +18,11 @@ const inter = Inter({
 // ---------------------------------------------------------------------------
 export const metadata: Metadata = {
   title: {
-    default: 'TaxLens-AI | Trợ Lý Ảo Phát Hiện Lỗi Chứng Từ',
-    template: '%s | TaxLens-AI',
+    default: 'TrustAgent | Trợ Lý Ảo Phát Hiện Lỗi Chứng Từ',
+    template: '%s | TrustAgent',
   },
   description:
-    'TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer) — Nền tảng AI đa tác nhân phát hiện lỗi chứng từ, hóa đơn và gian lận tài chính cho ngành kiểm toán Việt Nam.',
+    'TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer) — Nền tảng AI đa tác nhân phát hiện lỗi chứng từ, hóa đơn và gian lận tài chính cho ngành kiểm toán Việt Nam.',
   authors: [{ name: 'Đoàn Hoàng Việt (Việt Gamer)' }],
   keywords: ['Kiểm toán', 'Hóa đơn', 'Chứng từ', 'Gian lận', 'OCR', 'LangGraph', 'MCP', 'AI'],
 }

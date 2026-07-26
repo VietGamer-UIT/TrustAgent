@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: Tuân Thủ Agent (Compliance Agent)
-# Bản quyền: TaxLens-AI bởi Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Tuân Thủ Agent (Compliance Agent)
+# Bản quyền: TrustAgent bởi Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Agent chuyên trách đối chiếu hóa đơn với cơ sở dữ liệu Tổng cục Thuế.
 #
@@ -32,7 +32,7 @@ from ..mcp_servers.thue_mcp import (
 )
 
 
-logger = logging.getLogger("taxlens.agents.tuan_thu")
+logger = logging.getLogger("trustagent.agents.tuan_thu")
 
 MAX_THU_LAI: int = 3
 TEN_AGENT: str = "tuan_thu_agent"

@@ -1,6 +1,6 @@
 # =============================================================================
-# TaxLens-AI :: Audit Trail — Async Database Connection
-# Copyright: TaxLens-AI by Đoàn Hoàng Việt (Việt Gamer)
+# TrustAgent :: Audit Trail — Async Database Connection
+# Copyright: TrustAgent by Đoàn Hoàng Việt (Việt Gamer)
 # =============================================================================
 # Provides a fully async SQLAlchemy 2.x engine and session factory
 # connected to PostgreSQL via asyncpg driver.
@@ -29,7 +29,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 
-logger = logging.getLogger("taxlens.audit.database")
+logger = logging.getLogger("trustagent.database.database")
 
 # ---------------------------------------------------------------------------
 # Connection string construction
@@ -37,11 +37,11 @@ logger = logging.getLogger("taxlens.audit.database")
 # Reads from environment variables injected by Docker / .env file.
 # Format: postgresql+asyncpg://USER:PASSWORD@HOST:PORT/DBNAME
 # ---------------------------------------------------------------------------
-_PG_USER: str     = os.getenv("POSTGRES_USER",     "taxlens")
+_PG_USER: str     = os.getenv("POSTGRES_USER",     "trustagent")
 _PG_PASSWORD: str = os.getenv("POSTGRES_PASSWORD",  "changeme_in_prod")
 _PG_HOST: str     = os.getenv("POSTGRES_HOST",      "db")      # docker-compose service name
 _PG_PORT: str     = os.getenv("POSTGRES_PORT",      "5432")
-_PG_DB: str       = os.getenv("POSTGRES_DB",        "taxlens_audit")
+_PG_DB: str       = os.getenv("POSTGRES_DB",        "trustagent_audit")
 
 DATABASE_URL: str = (
     f"postgresql+asyncpg://{_PG_USER}:{_PG_PASSWORD}"
@@ -82,7 +82,7 @@ AsyncSessionFactory: async_sessionmaker[AsyncSession] = async_sessionmaker(
 # Declarative base (imported by models.py)
 # ---------------------------------------------------------------------------
 class Base(DeclarativeBase):
-    """Shared declarative base for all TaxLens-AI ORM models."""
+    """Shared declarative base for all TrustAgent ORM models."""
     pass
 
 
