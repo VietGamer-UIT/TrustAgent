@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from datetime import datetime, timezone
 from typing import Any
 
@@ -42,22 +43,31 @@ async def supervisor_node(state: TrustAgentState) -> TrustAgentState:
         logger.info("[Giám Sát] Tất cả agent hoàn tất — tổng hợp báo cáo.")
         final_log = _tao_bao_cao_tong_hop(state)
         
-        # Ghi vào Database
-        try:
-            async with AsyncSessionLocal() as session:
-                async with session.begin():
-                    new_event = AuditEvent(
-                        incident_id=incident_id,
-                        status="COMPLETED",
-                        tong_hoa_don=len(state.get("hoa_don_list", [])),
-                        tong_loi_thue=len(state.get("tax_warnings", [])),
-                        z3_status=state.get("z3_status", "UNKNOWN"),
-                        final_audit_log=final_log
-                    )
-                    session.add(new_event)
-            logger.info(f"[Database] Đã lưu AuditEvent cho {incident_id}")
-        except Exception as e:
-            logger.error(f"[Database] Lỗi lưu DB: {e}")
+        # Ghi vào Database không chặn luồng chính (Fire and Forget)
+        async def _save_to_db(incident, log, hoa_don, tax, z3):
+            try:
+                async with AsyncSessionLocal() as session:
+                    async with session.begin():
+                        new_event = AuditEvent(
+                            incident_id=incident,
+                            status="COMPLETED",
+                            tong_hoa_don=len(hoa_don),
+                            tong_loi_thue=len(tax),
+                            z3_status=z3,
+                            final_audit_log=log
+                        )
+                        session.add(new_event)
+                logger.info(f"[Database] Đã lưu AuditEvent cho {incident}")
+            except Exception as e:
+                logger.error(f"[Database] Lỗi lưu DB: {e}")
+
+        asyncio.create_task(_save_to_db(
+            incident_id, 
+            final_log, 
+            state.get("hoa_don_list", []), 
+            state.get("tax_warnings", []), 
+            state.get("z3_status", "UNKNOWN")
+        ))
 
         return {
             "messages": messages,

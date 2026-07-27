@@ -9,12 +9,13 @@ python-multipart>=0.0.9
 starlette>=1.0
 
 # --- LangGraph / LangChain multi-agent ---
-langgraph>=0.1.0
-langchain>=0.2.0
-langchain-core>=0.2.0
-langchain-google-genai>=1.0.1
-google-generativeai>=0.8.0
-
+langgraph
+langchain
+langchain-core
+langchain-community
+langchain-huggingface
+langchain-google-genai
+google-generativeai
 # --- Pydantic v2 (MCP server validation) ---
 pydantic>=2.7.0
 pydantic-settings>=2.2
@@ -44,6 +45,8 @@ z3-solver>=4.12.0
 
 # --- Phase 3.5: Legal RAG (optional) ---
 chromadb>=0.5.0
+unstructured>=0.14.0
+markdown>=3.6
 
 # --- Phase 4: Database (SQLite cho dev, PostgreSQL cho production) ---
 aiosqlite>=0.19           # SQLite async driver (dev/test)

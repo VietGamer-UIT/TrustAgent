@@ -1,20 +1,11 @@
 # =============================================================================
 # TrustAgent :: Audit Trail Package
 # =============================================================================
-from .database import Base, AsyncSessionFactory, engine, init_db, close_db, get_audit_session
-from .models import AuditEvent, EventType, AgentName, EventStatus
-from .middleware import (
-    AuditMiddleware,
-    audit_tool_call,
-    audit_agent_event,
-    set_audit_context,
-)
+from .models import Base, engine, AsyncSessionLocal, init_db, AuditEvent
 
 __all__ = [
     # Database
-    "Base", "AsyncSessionFactory", "engine", "init_db", "close_db", "get_audit_session",
+    "Base", "engine", "AsyncSessionLocal", "init_db",
     # Models
-    "AuditEvent", "EventType", "AgentName", "EventStatus",
-    # Middleware & helpers
-    "AuditMiddleware", "audit_tool_call", "audit_agent_event", "set_audit_context",
+    "AuditEvent",
 ]
