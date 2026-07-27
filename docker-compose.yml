@@ -30,7 +30,7 @@ services:
       - "8000:8000"
     # Truyền biến môi trường trực tiếp từ file (ưu tiên .env nếu có, fallback là .env.example)
     env_file:
-      - ./Backend/.env.example
+      - ./.env.example
     environment:
       # Ghi đè DATABASE_URL để đảm bảo host trỏ vào service 'db'
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/trustagent_db
