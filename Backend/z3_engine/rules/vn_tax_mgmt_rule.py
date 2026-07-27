@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Bộ quy tắc Z3 cho Nghị định 252/2026/NĐ-CP
+TrustAgent — Bộ quy tắc Z3 cho Nghị định 252/2026/NĐ-CP
 (Quản lý Thuế)
 
 Các ràng buộc Z3:

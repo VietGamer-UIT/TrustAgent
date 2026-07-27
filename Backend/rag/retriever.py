@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Legal RAG Retriever
+TrustAgent — Legal RAG Retriever
 
 Nhiệm vụ: Lấy đúng văn bản luật từ legal_data/ dựa trên ScenarioType.
 

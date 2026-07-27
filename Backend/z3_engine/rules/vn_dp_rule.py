@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Bộ quy tắc Z3 cho Nghị định 356/2025/NĐ-CP
+TrustAgent — Bộ quy tắc Z3 cho Nghị định 356/2025/NĐ-CP
 (Bảo vệ dữ liệu cá nhân Việt Nam)
 
 Triển khai 5 ràng buộc Z3 tương ứng với 5 quy tắc pháp lý:

@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Abstract Business Rule Base Class
+TrustAgent — Abstract Business Rule Base Class
 
 All business rules must inherit from BusinessRule and implement:
 - encode(): Add Z3 constraints to the solver

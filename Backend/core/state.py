@@ -5,7 +5,7 @@ from langgraph.graph.message import add_messages
 class TrustAgentState(TypedDict, total=False):
     """
     Siêu trạng thái (Unified State) của toàn bộ quá trình TrustAgent.
-    Kết hợp cả luồng Thuế (TaxLens-AI) và Pháp lý (TrustAgent-Forensics).
+    Kết hợp cả luồng Thuế (TrustAgent) và Pháp lý (TrustAgent).
     """
     # --- Metadata (Thông tin đầu vào) ---
     incident_id: str                          # Session ID (thay thế ma_phien)

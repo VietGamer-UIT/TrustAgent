@@ -1,5 +1,5 @@
 # KNOWLEDGE BASE - NGHỊ ĐỊNH 165/2025/NĐ-CP
-> Dữ liệu cấu trúc được trích xuất tự động cho TrustAgent.Forensics
+> Dữ liệu cấu trúc được trích xuất tự động cho TrustAgent
 
 ## Điều 1. Phạm vi điều chỉnh
 

@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Node Functions cho LangGraph Workflow (Phase 3.5)
+TrustAgent — Node Functions cho LangGraph Workflow (Phase 3.5)
 
 Mỗi "node" là một bước trong workflow, nhận vào AgentState và trả về
 dict để cập nhật state. LangGraph tự động merge dict vào state.

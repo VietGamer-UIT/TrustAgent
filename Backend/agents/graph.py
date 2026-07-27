@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — LangGraph Graph Builder (Phase 3.5)
+TrustAgent — LangGraph Graph Builder (Phase 3.5)
 
 Xây dựng và compile StateGraph với Legal RAG Node.
 

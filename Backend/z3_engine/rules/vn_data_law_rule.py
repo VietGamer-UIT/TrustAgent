@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Vietnam Data Law Rule (Nghị định 165/2025/NĐ-CP)
+TrustAgent — Vietnam Data Law Rule (Nghị định 165/2025/NĐ-CP)
 """
 
 from typing import Any

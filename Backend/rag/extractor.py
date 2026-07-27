@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Threshold Extractor từ văn bản luật (RAG Module)
+TrustAgent — Threshold Extractor từ văn bản luật (RAG Module)
 
 Nhiệm vụ: Đọc văn bản luật và trích xuất các con số ngưỡng (threshold)
 thành dict Python để đưa vào Z3 BusinessRule.

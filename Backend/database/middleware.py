@@ -219,7 +219,7 @@ def audit_tool_call(
 
     Usage (apply to MCP tool implementations):
         @mcp_tool("run_volatility_plugin")
-        @audit_tool_call(agent_name=AgentName.FORENSICS_AGENT)
+        @audit_tool_call(agent_name=AgentName.LEGAL_AGENT)
         async def run_volatility_plugin(params: VolatilityInput) -> dict:
             ...
 
@@ -328,7 +328,7 @@ async def audit_agent_event(
 
         await audit_agent_event(
             event_type=EventType.AGENT_STARTED,
-            agent_name=AgentName.FORENSICS_AGENT,
+            agent_name=AgentName.LEGAL_AGENT,
             incident_id=state["incident_id"],
             graph_run_id=state["graph_run_id"],
         )

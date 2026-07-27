@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Bộ quy tắc Z3 cho Nghị định 200/2026/NĐ-CP
+TrustAgent — Bộ quy tắc Z3 cho Nghị định 200/2026/NĐ-CP
 (Trái phiếu doanh nghiệp phát hành riêng lẻ)
 
 Các ràng buộc Z3:

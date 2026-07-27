@@ -1,5 +1,5 @@
 # KNOWLEDGE BASE - NGHỊ ĐỊNH 356/2025/NĐ-CP (BẢO VỆ DỮ LIỆU CÁ NHÂN)
-> Dữ liệu được trích xuất tự động cho TrustAgent.Forensics
+> Dữ liệu được trích xuất tự động cho TrustAgent
 
 ## Điều 1. Phạm vi điều chỉnh 
 Nghị định này quy định chi tiết khoản 2, khoản 3 Điều 2; khoản 5 Điều 4; 
@@ -2887,9 +2887,9 @@ giải thích)
 
 ---
 
-## Bảng tổng hợp ngưỡng pháp lý (ThresholdExtractor — TrustAgent.Forensics)
+## Bảng tổng hợp ngưỡng pháp lý (ThresholdExtractor — TrustAgent)
 
-Bảng này được tạo tự động cho module RAG của TrustAgent.Forensics.
+Bảng này được tạo tự động cho module RAG của TrustAgent.
 Các giá trị ngưỡng được trích xuất trực tiếp từ văn bản Nghị định 356/2025/NĐ-CP.
 
 `json
@@ -2912,7 +2912,7 @@ Các giá trị ngưỡng được trích xuất trực tiếp từ văn bản N
 
 ---
 
-## Bang tong hop nguong phap ly (TrustAgent.Forensics)
+## Bang tong hop nguong phap ly (TrustAgent)
 
 ```json
 {

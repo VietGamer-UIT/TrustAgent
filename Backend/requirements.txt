@@ -28,7 +28,7 @@ python-dotenv>=1.0.1
 ruff>=0.4.0
 pytest>=8.1.0
 pytest-asyncio>=0.23.0
-# TrustAgent.Forensics â€” Dependencies (Phase 1â€“4)
+# TrustAgent â€” Dependencies (Phase 1â€“4)
 # Install: pip install -r requirements.txt
 # Python: 3.12+
 # â”€â”€ Phase 1: Z3 Symbolic Engine â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

@@ -6,7 +6,7 @@ logger = logging.getLogger("trustagent.agents.legal")
 
 async def legal_agent_node(state: TrustAgentState) -> TrustAgentState:
     """
-    Node xử lý pháp lý bằng Z3 (TrustAgent-Forensics).
+    Node xử lý pháp lý bằng Z3 (TrustAgent).
     """
     incident_id = state.get("incident_id", "UNKNOWN")
     logger.info(f"[Legal Agent] Bắt đầu kiểm tra pháp lý cho phiên {incident_id}")

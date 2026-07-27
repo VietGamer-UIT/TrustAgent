@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Z3 Solver Wrapper
+TrustAgent — Z3 Solver Wrapper
 
 The TrustAgentSolver is the central component of the Symbolic Layer.
 It wraps the Z3 Theorem Prover with a clean interface for verifying

@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Trạng thái chia sẻ giữa các Agent Node (Nghị định 356/2025/NĐ-CP)
+TrustAgent — Trạng thái chia sẻ giữa các Agent Node (Nghị định 356/2025/NĐ-CP)
 
 AgentState là "ký ức" trung tâm của workflow LangGraph.
 Mỗi node đọc từ state và trả về dict để cập nhật state.

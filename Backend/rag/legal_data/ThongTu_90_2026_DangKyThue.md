@@ -1,5 +1,5 @@
 # KNOWLEDGE BASE - THÔNG TƯ 90/2026/TT-BTC (QUY ĐỊNH VỀ ĐĂNG KÝ THUẾ)
-> Dữ liệu được trích xuất tự động cho TrustAgent.Forensics
+> Dữ liệu được trích xuất tự động cho TrustAgent
 
 ## Điều 1. Phạm vi điều chỉnh
 

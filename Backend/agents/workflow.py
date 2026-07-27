@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Public API cho LangGraph Workflow (Phase 3)
+TrustAgent — Public API cho LangGraph Workflow (Phase 3)
 
 TrustAgentWorkflow là điểm vào chính của toàn bộ hệ thống.
 Người dùng chỉ cần gọi .run(câu_yêu_cầu) và nhận kết quả đầy đủ.
@@ -213,7 +213,7 @@ if __name__ == "__main__":
     RESET = "[0m"
 
     print(f"{BOLD}================================================================================{RESET}")
-    print(f"{BOLD}🛡️ TRUSTAGENT.FORENSICS - HỆ THỐNG KIỂM TOÁN TỰ ĐỘNG (INTERACTIVE DEMO){RESET}")
+    print(f"{BOLD}🛡️ TRUSTAGENT.LEGAL - HỆ THỐNG KIỂM TOÁN TỰ ĐỘNG (INTERACTIVE DEMO){RESET}")
     print(f"{BOLD}================================================================================{RESET}")
     print(f"Luật hỗ trợ: {CYAN}NĐ 356{RESET} (Bảo vệ dữ liệu) | {CYAN}NĐ 165{RESET} (Luật Dữ liệu) | {CYAN}NĐ 200{RESET} (Trái phiếu) ")
     print(f"              {CYAN}NĐ 252{RESET} (Quản lý thuế)   | {CYAN}TT 90{RESET} (Đăng ký thuế)")

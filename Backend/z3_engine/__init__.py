@@ -1,1 +1,1 @@
-# TrustAgent.Forensics — Z3 Verification Engine
+# TrustAgent — Z3 Verification Engine

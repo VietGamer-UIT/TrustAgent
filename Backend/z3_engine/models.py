@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Data Models cho Z3 Verification Engine (Nghị định 356/2025/NĐ-CP)
+TrustAgent — Data Models cho Z3 Verification Engine (Nghị định 356/2025/NĐ-CP)
 
 Định nghĩa Pydantic models dùng trong toàn bộ pipeline kiểm chứng:
 - DataProcessingActivity : Input mô tả hoạt động xử lý dữ liệu cá nhân

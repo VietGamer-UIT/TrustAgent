@@ -1,5 +1,5 @@
 """
-TrustAgent.Forensics — Bộ quy tắc Z3 cho Thông tư 90/2026/TT-BTC
+TrustAgent — Bộ quy tắc Z3 cho Thông tư 90/2026/TT-BTC
 (Đăng ký Thuế)
 
 Các ràng buộc Z3:
