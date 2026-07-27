@@ -9,13 +9,13 @@ python-multipart>=0.0.9
 starlette>=1.0
 
 # --- LangGraph / LangChain multi-agent ---
-langgraph
-langchain
-langchain-core
-langchain-community
-langchain-huggingface
-langchain-google-genai
-google-generativeai
+langgraph==0.2.34
+langchain==0.3.2
+langchain-core==0.3.9
+langchain-community==0.3.1
+langchain-huggingface==0.1.0
+langchain-google-genai==2.0.1
+google-generativeai==0.8.2
 # --- Pydantic v2 (MCP server validation) ---
 pydantic>=2.7.0
 pydantic-settings>=2.2

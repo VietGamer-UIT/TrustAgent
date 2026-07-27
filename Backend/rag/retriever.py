@@ -6,7 +6,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from loguru import logger
 
-RAG_DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data_pipeline", "legal_docs")
+RAG_DATA_DIR = os.path.join(os.path.dirname(__file__), "legal_data")
 CHROMA_DB_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
 
 class LegalRetriever:
