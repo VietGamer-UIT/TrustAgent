@@ -1,4 +1,4 @@
-# 🛡️ TrustAgent - The Neuro-Symbolic Audit & Legal Forensics Platform
+# 🛡️ TrustAgent - The Neuro-Symbolic Audit & Legal Platform
 
 ![TrustAgent Banner](https://via.placeholder.com/1200x400/000000/FFFFFF/?text=TrustAgent+Enterprise)
 

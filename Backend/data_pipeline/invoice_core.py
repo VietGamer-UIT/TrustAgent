@@ -34,6 +34,8 @@ class InvoiceData(BaseModel):
     nguoi_mua: Participant = Field(default_factory=Participant)
     tai_chinh: FinancialData = Field(default_factory=FinancialData)
     chu_ky_so: SignatureData = Field(default_factory=SignatureData)
+    trang_thai_hoa_don: Optional[str] = Field(None, description="Trạng thái của hóa đơn")
+    tinh_chat: Optional[str] = Field(None, description="Tính chất (Hóa đơn mới, Thay thế, Điều chỉnh)")
 
 class Violation(BaseModel):
     rule: str
@@ -180,7 +182,7 @@ class InvoiceValidator:
             ))
 
     def validate_math(self):
-        """Rule 2 - Đối soát Số học (Math Check)"""
+        """Rule 2 - Đối soát Số học (Math Check) - Hỗ trợ cả số âm"""
         tc_thue = self.data.tai_chinh.tong_tien_chua_thue
         t_thue = self.data.tai_chinh.tong_tien_thue
         tt_tbso = self.data.tai_chinh.tong_tien_thanh_toan
@@ -194,6 +196,17 @@ class InvoiceValidator:
                 description=f"Lệch số học. Tổng tiền chưa thuế ({tc_thue}) + Thuế ({t_thue}) = {tong_tinh_toan}, khác Tổng thanh toán ({tt_tbso}). Mức lệch: {diff} VNĐ",
                 severity="HIGH"
             ))
+
+    def validate_status(self):
+        """Rule 5 - Kiểm tra trạng thái hóa đơn"""
+        if self.data.trang_thai_hoa_don:
+            status_lower = self.data.trang_thai_hoa_don.lower()
+            if "đã bị thay thế" in status_lower or "đã bị điều chỉnh" in status_lower:
+                self.violations.append(Violation(
+                    rule="WARNING_REPLACED",
+                    description=f"Hóa đơn này có trạng thái '{self.data.trang_thai_hoa_don}'. Đây là hóa đơn cũ không còn hiệu lực.",
+                    severity="WARNING"
+                ))
 
     def validate_integrity(self):
         """
@@ -251,6 +264,7 @@ class InvoiceValidator:
         self.validate_math()
         self.validate_integrity()
         self.validate_time_sync()
+        self.validate_status()
 
         invoice_id = f"{self.data.ky_hieu or 'UNKNOWN'}_{self.data.so_hoa_don or 'UNKNOWN'}"
         
@@ -267,7 +281,7 @@ class InvoiceValidator:
         )
 
 def process_invoice(file_path: str) -> ValidationResult:
-    """Hàm lõi nạp và xác thực hóa đơn."""
+    """Hàm lõi nạp và xác thực hóa đơn XML đơn lẻ."""
     parser = InvoiceParser(file_path)
     data = parser.parse()
     
@@ -276,6 +290,118 @@ def process_invoice(file_path: str) -> ValidationResult:
     
     logger.info(f"Kết quả kiểm định HĐ {result.invoice_id}: {result.status}")
     return result
+
+# --- Batch Invoice Parser ---
+
+class BatchInvoiceParser:
+    """
+    Trình bóc tách Bảng kê Hóa đơn (Excel/CSV/TSV).
+    Xử lý hàng loạt hóa đơn, bao gồm hóa đơn điều chỉnh/thay thế (giá trị âm) và khuyến mãi (giá trị 0).
+    """
+    def __init__(self, file_path: str):
+        self.file_path = file_path
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File không tồn tại: {file_path}")
+
+    def _clean_money(self, val_str: Any) -> float:
+        if not val_str or str(val_str).lower() == 'nan':
+            return 0.0
+        val_str = str(val_str).replace(" đ", "").replace("VND", "").replace(",", "").replace(" ", "").strip()
+        if not val_str or val_str.lower() in ['kct', 'ktt', '']:
+            return 0.0
+        try:
+            return float(val_str)
+        except ValueError:
+            return 0.0
+
+    def parse(self) -> List[InvoiceData]:
+        logger.info(f"Đang đọc bảng kê: {self.file_path}")
+        import pandas as pd
+        
+        ext = self.file_path.lower()
+        try:
+            if ext.endswith('.csv') or ext.endswith('.txt') or ext.endswith('.tsv'):
+                # Try reading with tab first, if fails try comma
+                try:
+                    df = pd.read_csv(self.file_path, sep='\t', dtype=str)
+                    if len(df.columns) < 2:
+                        df = pd.read_csv(self.file_path, sep=',', dtype=str)
+                except Exception:
+                    df = pd.read_csv(self.file_path, sep=',', dtype=str)
+            elif ext.endswith('.xlsx') or ext.endswith('.xls'):
+                df = pd.read_excel(self.file_path, dtype=str)
+            else:
+                raise ValueError(f"Định dạng file không hỗ trợ: {ext}")
+        except Exception as e:
+            logger.error(f"Lỗi đọc file bảng kê {self.file_path}: {e}")
+            raise
+
+        records = df.to_dict('records')
+        invoices = []
+        
+        for row in records:
+            keys_lower = {str(k).strip().lower(): k for k in row.keys() if pd.notna(k)}
+            
+            def get_val(*possible_keys) -> str:
+                for pk in possible_keys:
+                    if pk.lower() in keys_lower:
+                        val = row.get(keys_lower[pk.lower()])
+                        if pd.notna(val):
+                            return str(val).strip()
+                return ""
+            
+            ky_hieu = get_val("Ký hiệu hóa đơn", "Ký hiệu")
+            so_hoa_don = get_val("Số hóa đơn", "Số")
+            
+            if not so_hoa_don or so_hoa_don.lower() == 'tổng' or so_hoa_don.lower() == 'nan':
+                continue
+                
+            ngay_lap_str = get_val("Ngày lập", "Ngày, tháng, năm", "Ngày hóa đơn")
+            mst_ban = get_val("MST người bán", "MST NGƯỜI BÁN")
+            ten_ban = get_val("Tên người bán", "TÊN NGƯỜI BÁN")
+            mst_mua = get_val("MST người mua/nhận", "MST người mua", "MST NGƯỜI MUA")
+            ten_mua = get_val("Tên người mua/nhận", "Tên người mua", "TÊN NGƯỜI MUA")
+            
+            tien_chua_thue_str = get_val("Tổng tiền chưa thuế", "Giá trị HHDV mua vào chưa có thuế GTGT", "Giá trị HHDV", "Giá trị hàng hóa, dịch vụ chưa có thuế GTGT")
+            tien_thue_str = get_val("Tổng tiền thuế", "Tiền thuế", "Tiền thuế GTGT")
+            tong_tien_str = get_val("Tổng tiền thanh toán")
+            
+            trang_thai = get_val("Trạng thái hóa đơn", "Trạng thái")
+            tinh_chat = get_val("Tính chất")
+            
+            ngay_lap = None
+            if ngay_lap_str:
+                try:
+                    ngay_lap = datetime.strptime(ngay_lap_str, "%d/%m/%Y")
+                except ValueError:
+                    try:
+                        ngay_lap = datetime.fromisoformat(ngay_lap_str)
+                    except ValueError:
+                        pass
+                        
+            tai_chinh = FinancialData(
+                tong_tien_chua_thue=self._clean_money(tien_chua_thue_str),
+                tong_tien_thue=self._clean_money(tien_thue_str),
+                tong_tien_thanh_toan=self._clean_money(tong_tien_str)
+            )
+            
+            if tai_chinh.tong_tien_thanh_toan == 0.0 and (tai_chinh.tong_tien_chua_thue != 0.0 or tai_chinh.tong_tien_thue != 0.0):
+                tai_chinh.tong_tien_thanh_toan = tai_chinh.tong_tien_chua_thue + tai_chinh.tong_tien_thue
+                
+            inv = InvoiceData(
+                ky_hieu=ky_hieu,
+                so_hoa_don=so_hoa_don,
+                ngay_lap=ngay_lap,
+                nguoi_ban=Participant(ten=ten_ban, mst=mst_ban),
+                nguoi_mua=Participant(ten=ten_mua, mst=mst_mua),
+                tai_chinh=tai_chinh,
+                trang_thai_hoa_don=trang_thai,
+                tinh_chat=tinh_chat
+            )
+            invoices.append(inv)
+            
+        logger.info(f"Đã bóc tách {len(invoices)} hóa đơn từ bảng kê.")
+        return invoices
 
 if __name__ == "__main__":
     import sys

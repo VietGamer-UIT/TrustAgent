@@ -80,23 +80,21 @@ async def tuan_thu_agent_node(state: TrustAgentState) -> dict:
             messages=messages,
         )
         if batch_result is not None:
-            du_lieu_batch = batch_result.get("du_lieu", {})
-            ket_qua_mst = du_lieu_batch.get("ket_qua", [])
+            ket_qua_mst = batch_result.get("ket_qua", [])
 
-            nguon = batch_result.get("nguon_tra_cuu", "local_db")
             messages.append({
                 "role": "assistant",
                 "agent": TEN_AGENT,
                 "content": (
-                    f"Tra cứu {len(mst_set)} MST từ {'PostgreSQL local cache' if nguon == 'local_db' else 'fallback mock'}. "
-                    f"Tìm thấy {du_lieu_batch.get('tim_thay_trong_db', 0)} trong DB, "
-                    f"{du_lieu_batch.get('dung_fallback', 0)} dùng fallback."
+                    f"Tra cứu {len(mst_set)} MST từ PostgreSQL local cache. "
+                    f"Tìm thấy {batch_result.get('tim_thay_trong_db', 0)} trong DB, "
+                    f"{batch_result.get('khong_co_data', 0)} không có data."
                 ),
                 "timestamp": datetime.now(tz=timezone.utc).isoformat(),
             })
 
             # Xử lý danh sách đen từ kết quả batch
-            for r in du_lieu_batch.get("danh_sach_den", []):
+            for r in batch_result.get("danh_sach_den", []):
                 tinh_trang = (r.get("tinh_trang") or "").lower()
                 mst = r.get("mst", "")
                 hd_lien_quan = [

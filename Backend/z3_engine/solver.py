@@ -1,218 +1,73 @@
-"""
-TrustAgent — Z3 Solver Wrapper
+import z3
+from loguru import logger
+from typing import Dict, Any, Tuple, List
 
-The TrustAgentSolver is the central component of the Symbolic Layer.
-It wraps the Z3 Theorem Prover with a clean interface for verifying
-business transactions against a registry of encoded rules.
+class LegalSolver:
+    def __init__(self):
+        self.solver = z3.Solver()
+        # Khai báo các biến Z3 đại diện cho các thông số hợp đồng
+        self.tong_gia_tri = z3.Real('tong_gia_tri')
+        self.phat_vi_pham = z3.Real('phat_vi_pham')
+        self.thue_suat = z3.Real('thue_suat')
+        
+    def check_compliance(self, contract_data: Dict[str, Any], context_rules: str = "") -> Tuple[str, List[Dict[str, Any]]]:
+        """
+        Kiểm tra tính hợp lệ của hợp đồng bằng Z3 Solver.
+        Trả về (Trạng thái SAT/UNSAT, danh sách lỗi).
+        """
+        self.solver.reset()
+        violations = []
+        
+        # Lấy dữ liệu thực tế từ contract_data (Fallback về 0 nếu không có)
+        val_tong_gia_tri = float(contract_data.get("tong_gia_tri", 0))
+        val_phat_vi_pham = float(contract_data.get("phat_vi_pham", 0))
+        val_thue_suat = float(contract_data.get("thue_suat", 0))
 
-Architecture Role:
-    Neural Layer (Gemini) → JSON data → TrustAgentSolver → SAT/UNSAT
+        # Thêm các ràng buộc thực tế (Facts)
+        self.solver.add(self.tong_gia_tri == val_tong_gia_tri)
+        self.solver.add(self.phat_vi_pham == val_phat_vi_pham)
+        self.solver.add(self.thue_suat == val_thue_suat)
 
-Key Design Decisions:
-1. Each verification creates a FRESH solver (no state leakage between checks)
-2. Rules are registered once and reused across verifications
-3. Timing is measured for performance monitoring (target: < 5ms)
-4. Results include full audit metadata for the Forensics layer
-"""
+        # ---------------------------------------------------------
+        # Các quy tắc pháp lý (Legal Constraints)
+        # Có thể parse thêm từ context_rules, nhưng hardcode các luật cơ bản trước.
+        # ---------------------------------------------------------
 
-from __future__ import annotations
+        # Rule 1: Mức phạt vi phạm hợp đồng thương mại không được vượt quá 8% giá trị phần nghĩa vụ hợp đồng bị vi phạm 
+        # (Điều 301 Luật Thương mại 2005). Giả định phần bị vi phạm = tổng giá trị.
+        self.solver.add(self.phat_vi_pham <= self.tong_gia_tri * 0.08)
 
-import time
-from typing import Any
+        # Rule 2: Thuế suất VAT phải là số dương và hợp lý (0, 5, 8, 10, v.v...)
+        self.solver.add(self.thue_suat >= 0)
+        self.solver.add(self.thue_suat <= 100)
 
-from z3 import Solver, sat, unsat
-
-from .models import (
-    VerificationResult,
-    VerificationStatus,
-    RuleViolation,
-    RuleSeverity,
-)
-from .rules.base_rule import BusinessRule
-
-
-class TrustAgentSolver:
-    """
-    Main verification engine wrapping Z3 Theorem Prover.
-
-    Usage:
-        solver = TrustAgentSolver()
-        solver.register_rule(VietnamCashPaymentRule())
-        solver.register_rule(KoreaTaxRefundRule())
-
-        result = solver.verify(transaction_data, rule_names=["vn_cash_payment_threshold"])
-        if result.is_compliant:
-            execute_transaction()
+        # Kiểm tra tính khả thi (SAT)
+        # Z3 đang tìm kiếm một model thỏa mãn CẢ giá trị thực tế VÀ quy định luật.
+        result = self.solver.check()
+        
+        if result == z3.unsat:
+            status = "UNSAT"
+            # Logic fallback để xác định chính xác rule nào bị vi phạm
+            if val_phat_vi_pham > val_tong_gia_tri * 0.08:
+                violations.append({
+                    "rule": "Luật Thương mại 2005 - Điều 301",
+                    "description": f"Mức phạt vi phạm ({val_phat_vi_pham:,.0f}) vượt quá 8% tổng giá trị hợp đồng ({val_tong_gia_tri * 0.08:,.0f}).",
+                    "severity": "high"
+                })
+            if val_thue_suat < 0 or val_thue_suat > 100:
+                 violations.append({
+                    "rule": "Luật Thuế",
+                    "description": f"Thuế suất ({val_thue_suat}%) không hợp lệ.",
+                    "severity": "high"
+                })
+            if not violations:
+                violations.append({
+                    "rule": "Quy tắc không xác định",
+                    "description": "Các điều khoản hợp đồng mâu thuẫn với quy định pháp luật hoặc logic (Z3 UNSAT).",
+                    "severity": "high"
+                })
         else:
-            block_and_report(result.violations)
-    """
-
-    def __init__(self, timeout_ms: int = 5000) -> None:
-        """
-        Initialize the TrustAgent Solver.
-
-        Args:
-            timeout_ms: Z3 solver timeout in milliseconds (default: 5000ms)
-        """
-        self._rules: dict[str, BusinessRule] = {}
-        self._timeout_ms = timeout_ms
-
-    def register_rule(self, rule: BusinessRule) -> None:
-        """
-        Register a business rule for future verification checks.
-
-        Args:
-            rule: BusinessRule instance to register
-
-        Raises:
-            ValueError: If a rule with the same name is already registered
-        """
-        if rule.name in self._rules:
-            raise ValueError(
-                f"Rule '{rule.name}' is already registered. "
-                f"Use unregister_rule() first to replace it."
-            )
-        self._rules[rule.name] = rule
-
-    def unregister_rule(self, rule_name: str) -> None:
-        """Remove a registered rule by name."""
-        self._rules.pop(rule_name, None)
-
-    def get_registered_rules(self) -> list[str]:
-        """Return names of all registered rules."""
-        return list(self._rules.keys())
-
-    def verify(
-        self,
-        data: dict[str, Any],
-        rule_names: list[str] | None = None,
-        dynamic_thresholds: dict[str, int] | None = None,
-    ) -> VerificationResult:
-        """
-        Verify transaction data against registered business rules using Z3.
-
-        For each rule, a fresh Z3 Solver is created to ensure isolation.
-        The rule encodes its constraints (with optional dynamic thresholds from RAG),
-        binds the actual data, and the solver checks for satisfiability.
-
-        Args:
-            data: Transaction data dictionary (from Pydantic model)
-            rule_names: Specific rules to check. If None, checks ALL registered rules.
-            dynamic_thresholds: Thresholds from Legal RAG Module.
-                                If provided, rules use these instead of hardcoded defaults.
-                                Format: {"VN_CASH_THRESHOLD": 20000000, ...}
-
-        Returns:
-            VerificationResult with status, violations, and timing info
-        """
-        start_time = time.perf_counter()
-
-        # Determine which rules to check
-        if rule_names:
-            rules_to_check = {
-                name: self._rules[name]
-                for name in rule_names
-                if name in self._rules
-            }
-            missing = set(rule_names) - set(rules_to_check.keys())
-            if missing:
-                raise ValueError(f"Unknown rules: {missing}")
-        else:
-            rules_to_check = self._rules
-
-        if not rules_to_check:
-            return VerificationResult(
-                status=VerificationStatus.SAT,
-                is_compliant=True,
-                rules_checked=[],
-                verification_time_ms=0.0,
-                raw_input=data,
-                explanation="No rules registered to check.",
-            )
-
-        # Verify each rule independently
-        violations: list[RuleViolation] = []
-        rules_checked: list[str] = []
-        z3_model_str: str | None = None
-
-        for rule_name, rule in rules_to_check.items():
-            rules_checked.append(rule_name)
-
-            # Create a FRESH solver for each rule (isolation)
-            z3_solver = Solver()
-            z3_solver.set("timeout", self._timeout_ms)
-
-            try:
-                # Let the rule encode its constraints + bind data
-                # Pass dynamic_thresholds from RAG (None = use rule's own defaults)
-                rule.encode(z3_solver, data, dynamic_thresholds)
-
-                # Ask Z3: "Can all constraints be satisfied simultaneously?"
-                result = z3_solver.check()
-
-                if result == unsat:
-                    # UNSAT = The data contradicts the rule → VIOLATION
-                    violations.append(
-                        RuleViolation(
-                            rule_name=rule.name,
-                            rule_description=rule.description,
-                            severity=RuleSeverity(rule.severity),
-                            violation_detail=rule.get_violation_detail(data),
-                            legal_reference=rule.legal_reference,
-                        )
-                    )
-                elif result == sat:
-                    # SAT = Data is consistent with the rule → COMPLIANT
-                    model = z3_solver.model()
-                    z3_model_str = str(model)
-
-            except Exception as e:
-                # Z3 error or encoding error → treat as UNKNOWN
-                violations.append(
-                    RuleViolation(
-                        rule_name=rule.name,
-                        rule_description=rule.description,
-                        severity=RuleSeverity.WARNING,
-                        violation_detail=f"Verification error: {str(e)}",
-                        legal_reference=rule.legal_reference,
-                    )
-                )
-
-        # Calculate timing
-        elapsed_ms = (time.perf_counter() - start_time) * 1000
-
-        # Determine overall status
-        has_violations = len(violations) > 0
-        status = VerificationStatus.UNSAT if has_violations else VerificationStatus.SAT
-
-        # Build explanation
-        if has_violations:
-            violation_summaries = [v.violation_detail for v in violations]
-            explanation = (
-                f"❌ BLOCKED: {len(violations)} rule violation(s) detected. "
-                + " | ".join(violation_summaries)
-            )
-        else:
-            explanation = (
-                f"✅ APPROVED: Transaction passes all {len(rules_checked)} rule(s). "
-                f"Verification completed in {elapsed_ms:.2f}ms."
-            )
-
-        return VerificationResult(
-            status=status,
-            is_compliant=not has_violations,
-            violations=violations,
-            rules_checked=rules_checked,
-            verification_time_ms=round(elapsed_ms, 3),
-            raw_input=data,
-            z3_model=z3_model_str,
-            explanation=explanation,
-        )
-
-    def verify_transaction(self, data: dict[str, Any]) -> VerificationResult:
-        """Shorthand: verify against ALL registered rules."""
-        return self.verify(data)
-
-    def __repr__(self) -> str:
-        rule_names = ", ".join(self._rules.keys()) or "none"
-        return f"<TrustAgentSolver rules=[{rule_names}]>"
+            status = "SAT"
+            
+        logger.info(f"[LegalSolver] Kết quả Z3: {status}. Số lỗi: {len(violations)}")
+        return status, violations

@@ -6,12 +6,7 @@
 # Thay vì gọi API Tổng cục Thuế qua mạng, agent tra cứu bảng
 # `danh_muc_doanh_nghiep` trong database nội bộ → latency < 5ms.
 #
-# Công cụ MCP:
-#   - tra_cuu_mst_local      : Tra cứu MST từ PostgreSQL local cache
-#   - kiem_tra_mst_danh_sach : Kiểm tra nhiều MST cùng lúc
-#
-# Fallback: Nếu không tìm thấy trong local cache → fallback sang mock data
-# (giống thue_mcp.py cũ) để đảm bảo hoạt động kể cả khi DB chưa có data.
+# Dữ liệu được nạp vào DB từ module `data_pipeline/mst_scraper.py`.
 # =============================================================================
 
 from __future__ import annotations
@@ -19,12 +14,17 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Any, Callable
 
 from pydantic import BaseModel, Field, StrictStr, model_validator
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import text
 
 logger = logging.getLogger("trustagent.mcp.thue_db")
+
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost:5432/trustagent_db")
 
 # ---------------------------------------------------------------------------
 # Registry
@@ -59,61 +59,32 @@ def _nhat_ky(tool: str, params: dict[str, Any]) -> None:
 async def _query_mst_from_db(mst: str) -> dict[str, Any] | None:
     """
     Tra cứu MST từ PostgreSQL local cache.
-    Trả None nếu không tìm thấy hoặc DB không khả dụng.
+    Chỉ sử dụng Dữ liệu thực tế, KHÔNG DÙNG MOCK DATA.
+    Trả None nếu không tìm thấy.
     """
+    engine = create_async_engine(DATABASE_URL, echo=False)
     try:
-        from ..database.database import AsyncSessionFactory
-        from ..data_pipeline.models_pipeline import DoanNghiep
-        from sqlalchemy import select
+        async with engine.connect() as conn:
+            stmt = text("SELECT mst, ten_doanh_nghiep, nguoi_dai_dien, dang_hoat_dong FROM danh_muc_doanh_nghiep WHERE mst = :mst")
+            result = await conn.execute(stmt, {"mst": mst})
+            row = result.fetchone()
 
-        async with AsyncSessionFactory() as session:
-            stmt = select(DoanNghiep).where(DoanNghiep.mst == mst)
-            result = await session.execute(stmt)
-            dn = result.scalar_one_or_none()
-
-            if dn is None:
+            if row is None:
                 return None
 
             return {
-                "mst":             dn.mst,
-                "ten_doanh_nghiep": dn.ten_doanh_nghiep,
-                "dia_chi":         dn.dia_chi,
-                "nguoi_dai_dien":  dn.nguoi_dai_dien,
-                "ngay_cap":        dn.ngay_cap,
-                "tinh_trang":      dn.tinh_trang,
-                "co_quan_thue":    dn.co_quan_thue,
-                "loai_hinh":       dn.loai_hinh,
-                "canh_bao":        dn.canh_bao,
-                "nguon":           dn.nguon,
-                "cap_nhat_luc":    dn.cap_nhat_luc.isoformat() if dn.cap_nhat_luc else None,
+                "mst": row[0],
+                "ten_doanh_nghiep": row[1],
+                "nguoi_dai_dien": row[2],
+                "tinh_trang": "Đang hoạt động" if row[3] else "Ngừng hoạt động",
+                "canh_bao": "Công ty đã ngừng hoạt động/Bỏ trốn" if not row[3] else None,
+                "nguon": "local_db"
             }
-
     except Exception as exc:
-        logger.warning("[ThueDB MCP] DB không khả dụng: %s. Dùng fallback.", exc)
+        logger.error("[ThueDB MCP] Lỗi khi truy vấn DB: %s", exc)
         return None
-
-
-async def _fallback_mock(mst: str) -> dict[str, Any]:
-    """
-    Fallback: nếu DB không có data → dùng mock cũ từ thue_mcp.
-    Đảm bảo hệ thống hoạt động kể cả khi pipeline chưa chạy.
-    """
-    try:
-        from .thue_mcp import _mock_tra_cuu_mst
-        return await _mock_tra_cuu_mst(mst)
-    except ImportError:
-        return {
-            "mst": mst,
-            "ten_doanh_nghiep": "Không tìm thấy (DB chưa có data)",
-            "dia_chi": "—",
-            "nguoi_dai_dien": "—",
-            "ngay_cap": None,
-            "tinh_trang": "không tìm thấy",
-            "co_quan_thue": "—",
-            "loai_hinh": "—",
-            "canh_bao": "⚠️ Local cache chưa được nạp dữ liệu. Chạy pipeline seed.",
-            "nguon": "fallback_mock",
-        }
+    finally:
+        await engine.dispose()
 
 
 # ---------------------------------------------------------------------------
@@ -152,32 +123,25 @@ class KiemTraNhieuMSTInput(BaseModel):
 async def tra_cuu_mst_local(params: TraCuuMSTLocalInput) -> dict[str, Any]:
     """
     Tra cứu MST từ Local Cache (PostgreSQL).
-
-    Luồng:
-      1. Query bảng danh_muc_doanh_nghiep trong PostgreSQL nội bộ
-      2. Nếu không tìm thấy → fallback sang mock data
-      3. Trả về thông tin đầy đủ kèm cảnh báo (nếu có)
-
-    Lợi thế: Latency < 5ms (so với API Internet 200-2000ms).
+    Không dùng Mock data theo chuẩn Phase 3.1.
     """
     tool_name = "tra_cuu_mst_local"
     _nhat_ky(tool_name, params.model_dump())
 
     try:
-        # Ưu tiên 1: Query local PostgreSQL cache
         result = await _query_mst_from_db(params.mst)
-        nguon = "local_db"
-
-        # Ưu tiên 2: Fallback nếu DB không có
+        
         if result is None:
-            result = await _fallback_mock(params.mst)
-            nguon = "fallback_mock"
-            logger.info("[ThueDB MCP] MST %s không có trong local cache → dùng fallback", params.mst)
+            return {
+                "status": "not_found",
+                "cong_cu": tool_name,
+                "thong_bao": f"MST {params.mst} không tồn tại trong DB nội bộ."
+            }
 
         return {
             "status": "ok",
             "cong_cu": tool_name,
-            "nguon_tra_cuu": nguon,
+            "nguon_tra_cuu": "local_db",
             "du_lieu": result,
         }
 
@@ -193,13 +157,11 @@ async def tra_cuu_mst_local(params: TraCuuMSTLocalInput) -> dict[str, Any]:
 async def kiem_tra_mst_danh_sach(params: KiemTraNhieuMSTInput) -> dict[str, Any]:
     """
     Kiểm tra nhiều MST cùng lúc từ Local Cache.
-    Tất cả queries chạy song song (asyncio.gather) → nhanh hơn sequential.
     """
     tool_name = "kiem_tra_mst_danh_sach"
     _nhat_ky(tool_name, {"so_mst": len(params.danh_sach_mst)})
 
     try:
-        # Chạy song song tất cả queries
         tasks = [
             _query_mst_from_db(mst) for mst in params.danh_sach_mst
         ]
@@ -214,26 +176,17 @@ async def kiem_tra_mst_danh_sach(params: KiemTraNhieuMSTInput) -> dict[str, Any]
             else:
                 ket_qua.append(result)
 
-        # Fallback cho các MST không có trong DB
-        if cho_bo_sung:
-            fallback_tasks = [_fallback_mock(mst) for mst in cho_bo_sung]
-            fallback_results = await asyncio.gather(*fallback_tasks)
-            ket_qua.extend(fallback_results)
-
-        # Phân loại
         danh_sach_den = [
             r for r in ket_qua
-            if r.get("canh_bao") or r.get("tinh_trang", "").lower() not in (
-                "đang hoạt động", ""
-            )
+            if r.get("canh_bao") or r.get("tinh_trang", "").lower() != "đang hoạt động"
         ]
 
         return {
             "status": "ok",
             "cong_cu": tool_name,
             "tong_kiem_tra": len(params.danh_sach_mst),
-            "tim_thay_trong_db": len(params.danh_sach_mst) - len(cho_bo_sung),
-            "dung_fallback": len(cho_bo_sung),
+            "tim_thay_trong_db": len(ket_qua),
+            "khong_co_data": len(cho_bo_sung),
             "so_vi_pham": len(danh_sach_den),
             "ket_qua": ket_qua,
             "danh_sach_den": danh_sach_den,
