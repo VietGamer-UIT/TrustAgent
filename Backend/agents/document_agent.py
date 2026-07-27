@@ -24,8 +24,8 @@ import logging
 from datetime import datetime, timezone
 from typing import Any
 
-from .state import TrangThaiKiemTra
-from ..mcp_servers.ocr_mcp import (
+from core.state import TrustAgentState
+from mcp_servers.ocr_mcp import (
     doc_nhan_hoa_don, DocHoaDonInput,
 )
 
@@ -35,7 +35,7 @@ MAX_THU_LAI: int = 3
 TEN_AGENT: str = "chung_tu_agent"
 
 
-async def chung_tu_agent_node(state: TrangThaiKiemTra) -> TrangThaiKiemTra:
+async def chung_tu_agent_node(state: TrustAgentState) -> dict:
     """
     LangGraph node: Chứng Từ Agent (Document Agent).
 
@@ -44,7 +44,7 @@ async def chung_tu_agent_node(state: TrangThaiKiemTra) -> TrangThaiKiemTra:
     """
     messages = list(state.get("messages", []))
     error_log = list(state.get("error_log", []))
-    duong_dan = state.get("duong_dan_chung_tu", [])
+    duong_dan = state.get("evidence_paths", [])
 
     logger.info("[%s] Bắt đầu — %d chứng từ cần đọc", TEN_AGENT, len(duong_dan))
     messages.append({
@@ -208,11 +208,19 @@ async def chung_tu_agent_node(state: TrangThaiKiemTra) -> TrangThaiKiemTra:
     })
     logger.info("[%s] Hoàn tất — status=%s, lỗi=%d", TEN_AGENT, findings["status"], tat_ca_loi)
 
+    # Hợp nhất các lỗi thuế vào tax_warnings
+    tax_warnings = loi_so_hoc + trung_so + loi_format
+    
+    # Đánh dấu đã hoàn thành
+    extracted_data = state.get("extracted_data", {}).copy()
+    extracted_data["document_agent"] = findings["status"]
+
     return {
-        **state,
         "messages": messages,
         "error_log": error_log,
-        "chung_tu_findings": findings,
+        "hoa_don_list": tat_ca_hoa_don,
+        "tax_warnings": tax_warnings,
+        "extracted_data": extracted_data,
         "current_agent": "supervisor",
     }
 
