@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: trustagent-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: trustagent_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - trustagent-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: trustagent-backend
+    ports:
+      - "8000:8000"
+    # Truyền biến môi trường trực tiếp từ file (ưu tiên .env nếu có, fallback là .env.example)
+    env_file:
+      - ./Backend/.env.example
+    environment:
+      # Ghi đè DATABASE_URL để đảm bảo host trỏ vào service 'db'
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/trustagent_db
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Giữ lại thư mục uploads và ChromaDB
+      - ./Backend/uploads:/app/uploads
+      - ./Backend/rag/chroma_db:/app/rag/chroma_db
+    networks:
+      - trustagent-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: trustagent-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      # API endpoint mà UI sẽ trỏ tới
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      - backend
+    networks:
+      - trustagent-network
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+
+networks:
+  trustagent-network:
+    driver: bridge

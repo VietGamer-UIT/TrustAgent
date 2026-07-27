@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .state import TrustAgentState
+from database.models import AsyncSessionLocal, AuditEvent
 
 logger = logging.getLogger("trustagent.core.supervisor")
 
@@ -39,11 +40,30 @@ async def supervisor_node(state: TrustAgentState) -> TrustAgentState:
 
     if agent_tiep is None:
         logger.info("[Giám Sát] Tất cả agent hoàn tất — tổng hợp báo cáo.")
+        final_log = _tao_bao_cao_tong_hop(state)
+        
+        # Ghi vào Database
+        try:
+            async with AsyncSessionLocal() as session:
+                async with session.begin():
+                    new_event = AuditEvent(
+                        incident_id=incident_id,
+                        status="COMPLETED",
+                        tong_hoa_don=len(state.get("hoa_don_list", [])),
+                        tong_loi_thue=len(state.get("tax_warnings", [])),
+                        z3_status=state.get("z3_status", "UNKNOWN"),
+                        final_audit_log=final_log
+                    )
+                    session.add(new_event)
+            logger.info(f"[Database] Đã lưu AuditEvent cho {incident_id}")
+        except Exception as e:
+            logger.error(f"[Database] Lỗi lưu DB: {e}")
+
         return {
             "messages": messages,
             "iteration_count": iteration_count,
             "current_agent": "XONG",
-            "final_audit_log": _tao_bao_cao_tong_hop(state)
+            "final_audit_log": final_log
         }
 
     logger.info(f"[Giám Sát] Điều phối tới: {agent_tiep}")

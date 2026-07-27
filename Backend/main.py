@@ -4,6 +4,9 @@ import uuid
 import json
 from typing import List, Optional
 
+import google.generativeai as genai
+from rag.retriever import get_legal_context
+
 from fastapi import FastAPI, UploadFile, File, Form
 from pydantic import BaseModel
 from loguru import logger
@@ -88,3 +91,34 @@ async def kiem_tra_chung_tu(
         status="COMPLETED",
         final_audit_log=audit_log
     )
+
+class LegalQueryRequest(BaseModel):
+    query: str
+
+class LegalQueryResponse(BaseModel):
+    answer: str
+    context: str
+
+@app.post("/api/v1/tra-cuu-luat", response_model=LegalQueryResponse)
+async def tra_cuu_luat(request: LegalQueryRequest):
+    query = request.query
+    logger.info(f"Tra cứu luật pháp: {query}")
+    
+    context = get_legal_context(query)
+    answer = ""
+    
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if api_key:
+        try:
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel("gemini-1.5-flash")
+            prompt = f"Bạn là một chuyên gia pháp lý Việt Nam. Dựa vào ngữ cảnh sau để trả lời câu hỏi.\n\nNgữ cảnh:\n{context}\n\nCâu hỏi: {query}\n\nTrả lời ngắn gọn, chuyên nghiệp và có trích dẫn:"
+            response = model.generate_content(prompt)
+            answer = response.text
+        except Exception as e:
+            logger.error(f"Lỗi khi gọi Gemini: {e}")
+            answer = f"Không thể kết nối AI (Lỗi API). Dưới đây là trích dẫn luật thô:\n\n{context}"
+    else:
+        answer = f"Hệ thống chưa cấu hình GOOGLE_API_KEY. Dưới đây là trích dẫn luật thô từ hệ thống RAG:\n\n{context}"
+        
+    return LegalQueryResponse(answer=answer, context=context)
