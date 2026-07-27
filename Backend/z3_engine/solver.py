@@ -51,19 +51,25 @@ class LegalSolver:
             if val_phat_vi_pham > val_tong_gia_tri * 0.08:
                 violations.append({
                     "rule": "Luật Thương mại 2005 - Điều 301",
-                    "description": f"Mức phạt vi phạm ({val_phat_vi_pham:,.0f}) vượt quá 8% tổng giá trị hợp đồng ({val_tong_gia_tri * 0.08:,.0f}).",
+                    "description": f"Mức phạt vi phạm ({val_phat_vi_pham:,.0f} VNĐ) vượt quá 8% tổng giá trị hợp đồng ({val_tong_gia_tri * 0.08:,.0f} VNĐ).",
+                    "legal_basis": "CĂN CỨ KHOẢN 2 ĐIỀU 301 — LUẬT THƯƠNG MẠI 2005:\nMức phạt vi phạm đối với vi phạm nghĩa vụ hợp đồng hoặc tổng mức phạt đối với nhiều vi phạm không được vượt quá 8% giá trị phần nghĩa vụ hợp đồng bị vi phạm.",
+                    "remediation": f"Điều chỉnh lại mức phạt vi phạm trong hợp đồng xuống dưới hoặc bằng 8% tổng giá trị ({val_tong_gia_tri * 0.08:,.0f} VNĐ).",
                     "severity": "high"
                 })
             if val_thue_suat < 0 or val_thue_suat > 100:
                  violations.append({
                     "rule": "Luật Thuế",
                     "description": f"Thuế suất ({val_thue_suat}%) không hợp lệ.",
+                    "legal_basis": "CĂN CỨ LUẬT THUẾ GTGT:\nCác mức thuế suất hiện hành đối với hàng hóa, dịch vụ là 0%, 5%, 8% hoặc 10%.",
+                    "remediation": "Cập nhật mức thuế suất về giá trị hợp lệ theo pháp luật quy định.",
                     "severity": "high"
                 })
             if not violations:
                 violations.append({
                     "rule": "Quy tắc không xác định",
                     "description": "Các điều khoản hợp đồng mâu thuẫn với quy định pháp luật hoặc logic (Z3 UNSAT).",
+                    "legal_basis": "Hệ thống phát hiện mâu thuẫn toán học logic không xác định.",
+                    "remediation": "Kiểm tra lại toàn bộ số liệu giao dịch.",
                     "severity": "high"
                 })
         else:

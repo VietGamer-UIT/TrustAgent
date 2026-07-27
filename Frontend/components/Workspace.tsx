@@ -12,6 +12,12 @@ interface AuditLog {
   tax_warnings: any[];
   legal_violations: any[];
   messages: any[];
+  timestamp?: string;
+  audit_trail_steps?: {
+    step: string;
+    status: string;
+    details: string;
+  }[];
 }
 
 export default function Workspace() {
@@ -65,7 +71,7 @@ export default function Workspace() {
 
     const formData = new FormData();
     files.forEach((file) => {
-      formData.append("files", file);
+      formData.append("file", file);
     });
     
     // Giả lập gửi thêm contract data cho legal agent
@@ -77,7 +83,7 @@ export default function Workspace() {
     formData.append("contract_data", mockContractData);
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/kiem-tra/chung-tu", {
+      const response = await fetch("/api/v1/kiem-tra/upload", {
         method: "POST",
         body: formData,
       });
@@ -176,38 +182,134 @@ export default function Workspace() {
       {auditResult && (
         <div className="mt-12 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden animate-fade-in-up">
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-            <h2 className="text-xl font-bold text-slate-800">Báo cáo Kiểm toán</h2>
-            <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-bold uppercase">Hoàn tất</span>
+            <h2 className="text-xl font-bold text-slate-800">Kết quả Kiểm toán (Audit Trail Log)</h2>
+            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${auditResult.z3_status === 'UNSAT' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+              {auditResult.z3_status === 'UNSAT' ? 'Phát hiện vi phạm' : 'Hoàn tất'}
+            </span>
           </div>
           
           <div className="p-6">
+            {/* Cảnh báo Z3 */}
+            {auditResult.z3_status === 'UNSAT' ? (
+              <div className="mb-6 p-5 bg-red-50 border-l-4 border-red-600 rounded-r-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-3xl">❌</span>
+                  <h3 className="text-red-800 font-bold text-lg">PHÁN QUYẾT TOÁN HỌC: VI PHẠM PHÁP LUẬT (UNSATISFIABLE)</h3>
+                </div>
+                <p className="text-red-700 font-medium ml-11">
+                  Hệ thống đã tự động NGẮT KẾT NỐI API. Nghiêm cấm AI thực thi hành động này để bảo vệ doanh nghiệp khỏi rủi ro pháp lý và phạt tiền.
+                </p>
+              </div>
+            ) : (
+              <div className="mb-6 p-5 bg-green-50 border-l-4 border-green-600 rounded-r-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-3xl">✅</span>
+                  <h3 className="text-green-800 font-bold text-lg">PHÁN QUYẾT TOÁN HỌC: HỢP LỆ (SATISFIABLE)</h3>
+                </div>
+                <p className="text-green-700 font-medium ml-11">
+                  Mọi điều khoản đều tuân thủ quy định pháp luật. Hệ thống cho phép thực thi tiếp tục.
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                <p className="text-sm text-blue-600 font-medium">Tổng số hóa đơn</p>
+                <p className="text-sm text-blue-600 font-medium">Tổng số chứng từ (OCR)</p>
                 <p className="text-3xl font-bold text-blue-900 mt-1">{auditResult.tong_hoa_don}</p>
               </div>
-              <div className={`rounded-lg p-4 border ${auditResult.tong_loi_thue > 0 ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
-                <p className={`text-sm font-medium ${auditResult.tong_loi_thue > 0 ? 'text-red-600' : 'text-green-600'}`}>Cảnh báo Thuế</p>
-                <p className={`text-3xl font-bold mt-1 ${auditResult.tong_loi_thue > 0 ? 'text-red-900' : 'text-green-900'}`}>{auditResult.tong_loi_thue}</p>
+              <div className={`rounded-lg p-4 border ${auditResult.tong_loi_thue > 0 ? 'bg-yellow-50 border-yellow-100' : 'bg-green-50 border-green-100'}`}>
+                <p className={`text-sm font-medium ${auditResult.tong_loi_thue > 0 ? 'text-yellow-600' : 'text-green-600'}`}>Cảnh báo Thuế</p>
+                <p className={`text-3xl font-bold mt-1 ${auditResult.tong_loi_thue > 0 ? 'text-yellow-900' : 'text-green-900'}`}>{auditResult.tong_loi_thue}</p>
               </div>
-              <div className={`rounded-lg p-4 border ${auditResult.tong_loi_phap_ly > 0 ? 'bg-orange-50 border-orange-100' : 'bg-green-50 border-green-100'}`}>
-                <p className={`text-sm font-medium ${auditResult.tong_loi_phap_ly > 0 ? 'text-orange-600' : 'text-green-600'}`}>Vi phạm Pháp lý (Z3: {auditResult.z3_status})</p>
-                <p className={`text-3xl font-bold mt-1 ${auditResult.tong_loi_phap_ly > 0 ? 'text-orange-900' : 'text-green-900'}`}>{auditResult.tong_loi_phap_ly}</p>
+              <div className={`rounded-lg p-4 border ${auditResult.tong_loi_phap_ly > 0 ? 'bg-red-50 border-red-100' : 'bg-green-50 border-green-100'}`}>
+                <p className={`text-sm font-medium ${auditResult.tong_loi_phap_ly > 0 ? 'text-red-600' : 'text-green-600'}`}>Lỗi Pháp lý Z3</p>
+                <p className={`text-3xl font-bold mt-1 ${auditResult.tong_loi_phap_ly > 0 ? 'text-red-900' : 'text-green-900'}`}>{auditResult.tong_loi_phap_ly}</p>
               </div>
             </div>
 
-            <div className="bg-slate-900 rounded-lg p-4 overflow-x-auto">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-slate-400 text-xs font-mono">final_audit_log.json</span>
-                <button className="text-slate-400 hover:text-white transition-colors" onClick={() => navigator.clipboard.writeText(JSON.stringify(auditResult, null, 2))}>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                </button>
+            {/* Forensic Terminal Log */}
+            <div className="bg-slate-900 rounded-lg p-5 overflow-x-auto border border-slate-700 shadow-inner">
+              <div className="flex justify-between items-center mb-4 border-b border-slate-800 pb-2">
+                <span className="text-slate-400 text-xs font-mono uppercase tracking-widest flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                  Live Forensic Stream
+                </span>
               </div>
-              <pre className="text-emerald-400 text-sm font-mono whitespace-pre-wrap">
-                {JSON.stringify(auditResult, null, 2)}
-              </pre>
+              
+              <div className="font-mono text-[13px] leading-relaxed text-slate-300">
+                <div className="text-cyan-500 mb-1">======================================================================</div>
+                <div className="text-cyan-400 font-bold mb-1 tracking-wide">🛡️ TRUSTAGENT.FORENSICS — AUDIT TRAIL LOG</div>
+                <div className="text-cyan-500 mb-4">======================================================================</div>
+                
+                <div className="mb-4">
+                  <div className="text-blue-400 font-bold mb-1">[THÔNG TIN GIAO DỊCH]</div>
+                  <div className="text-slate-300">Hoạt động : Phân tích hồ sơ hợp đồng & chứng từ ({auditResult.tong_hoa_don} files)</div>
+                  <div className="text-slate-300">ID Phiên : {auditResult.incident_id}</div>
+                  <div className="text-slate-300">Thời gian : {auditResult.timestamp || new Date().toISOString()}</div>
+                </div>
+
+                {auditResult.audit_trail_steps && auditResult.audit_trail_steps.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-purple-400 font-bold mb-1">[TIẾN TRÌNH THỰC THI LANGGRAPH]</div>
+                    {auditResult.audit_trail_steps.map((step: any, idx: number) => (
+                      <div key={idx} className="flex gap-2">
+                        <span className="text-slate-500">Step {idx + 1}:</span>
+                        <span className="text-slate-300">{step.step}</span>
+                        <span className="text-slate-500">-&gt;</span>
+                        <span className={step.status === 'PASS' ? 'text-green-400' : (step.status === 'FAIL' ? 'text-red-400' : 'text-yellow-400')}>
+                          [{step.status}] {step.details}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mb-4">
+                  <div className="text-blue-400 font-bold mb-1">[KẾT QUẢ KIỂM CHỨNG LOGIC PHÁP LÝ]</div>
+                  <div className="text-slate-300">
+                    Phán quyết: {auditResult.z3_status === 'UNSAT' 
+                      ? <span className="text-red-400 font-bold">🚫 CHẶN THỰC THI NGAY LẬP TỨC</span> 
+                      : <span className="text-green-400 font-bold">✅ HỢP LỆ, CHO PHÉP THỰC THI</span>}
+                  </div>
+                </div>
+
+                {auditResult.legal_violations && auditResult.legal_violations.length > 0 && (
+                  <div className="mb-4">
+                    <div className="text-red-400 font-bold mb-2">[DẪN CHỨNG PHÁP LÝ & BẰNG CHỨNG VI PHẠM]</div>
+                    
+                    {auditResult.legal_violations.map((violation: any, idx: number) => (
+                      <div key={idx} className="mb-4 pl-2 border-l border-red-800">
+                        <div className="text-red-300 font-bold">📍 VI PHẠM {idx + 1}: {violation.rule}</div>
+                        {violation.legal_basis && (
+                          <div className="text-yellow-400 mt-1 whitespace-pre-wrap">⚠️ {violation.legal_basis}</div>
+                        )}
+                        <div className="text-slate-300 mt-1">Bằng chứng: {violation.description}</div>
+                        {violation.remediation && (
+                          <div className="text-green-400 mt-1">Hướng khắc phục: {violation.remediation}</div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-6 mb-2">
+                  <div className="text-blue-400 font-bold mb-1">[HÀNH ĐỘNG CỦA HỆ THỐNG]</div>
+                  {auditResult.z3_status === 'UNSAT' ? (
+                    <>
+                      <div className="text-red-400">Trạng thái: Đã ngắt kết nối — luồng dữ liệu bị chặn để tránh rủi ro pháp lý.</div>
+                      <div className="text-slate-400">Mục tiêu  : Chặn đứng luồng dữ liệu để bảo vệ doanh nghiệp trước rủi ro pháp lý và hành chính.</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-green-400">Trạng thái: Đã xác thực thành công. Dữ liệu sạch sẽ và tuân thủ.</div>
+                      <div className="text-slate-400">Mục tiêu  : Đảm bảo luồng tài chính liên tục và hợp pháp.</div>
+                    </>
+                  )}
+                </div>
+
+                <div className="text-cyan-500 mt-4">======================================================================</div>
+                <div className="text-slate-500 text-[10px] mt-1 flex justify-end">EOF - {auditResult.incident_id}</div>
+              </div>
             </div>
           </div>
         </div>

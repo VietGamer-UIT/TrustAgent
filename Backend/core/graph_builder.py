@@ -6,7 +6,9 @@ from core.state import TrustAgentState
 from agents.document_agent import chung_tu_agent_node
 from agents.tax_compliance_agent import tuan_thu_agent_node
 from agents.legal_agent import legal_agent_node
-from database.models import AuditEvent, AsyncSessionLocal
+
+# Bỏ import PostgreSQL
+# from database.models import AuditEvent, AsyncSessionLocal
 
 logger = logging.getLogger("trustagent.core.graph_builder")
 
@@ -37,10 +39,40 @@ def supervisor_router(state: TrustAgentState) -> Literal["document_agent", "tax_
     # 4. Khi đã qua hết các agent cần thiết
     return "compiler_node"
 
+import json
+import os
+import datetime
+
 async def compiler_node(state: TrustAgentState) -> Dict[str, Any]:
     """Node cuối tổng hợp kết quả (final_audit_log) và lưu DB."""
     logger.info("[Compiler] Tổng hợp báo cáo kiểm toán cuối cùng.")
     
+    # Xây dựng mảng audit_trail_steps cho giao diện Forensic
+    audit_trail_steps = []
+    
+    extracted_data = state.get("extracted_data", {})
+    if "document_agent" in extracted_data:
+        audit_trail_steps.append({
+            "step": "Document Parsing (OCR)",
+            "status": "PASS",
+            "details": f"Trích xuất thành công {len(state.get('hoa_don_list', []))} chứng từ."
+        })
+    if "tax_compliance_agent" in extracted_data:
+        tax_warnings = state.get("tax_warnings", [])
+        audit_trail_steps.append({
+            "step": "Tax Compliance Check",
+            "status": "WARNING" if tax_warnings else "PASS",
+            "details": f"Phát hiện {len(tax_warnings)} cảnh báo thuế."
+        })
+    if "legal_agent" in extracted_data:
+        z3_status = state.get("z3_status", "UNKNOWN")
+        legal_violations = state.get("legal_violations", [])
+        audit_trail_steps.append({
+            "step": "Legal Z3 Validation",
+            "status": "FAIL" if z3_status == "UNSAT" else "PASS",
+            "details": f"Z3 Trạng thái: {z3_status}. Vi phạm: {len(legal_violations)}."
+        })
+
     audit_log = {
         "incident_id": state.get("incident_id"),
         "status": "COMPLETED",
@@ -50,25 +82,19 @@ async def compiler_node(state: TrustAgentState) -> Dict[str, Any]:
         "tong_loi_phap_ly": len(state.get("legal_violations", [])),
         "tax_warnings": state.get("tax_warnings", []),
         "legal_violations": state.get("legal_violations", []),
-        "messages": state.get("messages", [])
+        "messages": state.get("messages", []),
+        "audit_trail_steps": audit_trail_steps,
+        "timestamp": datetime.datetime.now().isoformat()
     }
 
-    # Ghi bất đồng bộ (async write) vào PostgreSQL
+    # Ghi log ra file local (In-Memory/JSON Logger thay vì Postgres)
     try:
-        async with AsyncSessionLocal() as session:
-            db_event = AuditEvent(
-                incident_id=audit_log["incident_id"],
-                status=audit_log["status"],
-                tong_hoa_don=audit_log["tong_hoa_don"],
-                tong_loi_thue=audit_log["tong_loi_thue"],
-                z3_status=audit_log["z3_status"],
-                final_audit_log=audit_log
-            )
-            session.add(db_event)
-            await session.commit()
-            logger.info(f"[Compiler] Đã lưu AuditEvent {audit_log['incident_id']} vào Database thành công.")
+        log_file = os.path.join(os.path.dirname(os.path.dirname(__file__)), "audit_logs.json")
+        with open(log_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(audit_log, ensure_ascii=False) + "\n")
+        logger.info(f"[Compiler] Đã lưu Audit Log {audit_log['incident_id']} vào {log_file}.")
     except Exception as e:
-        logger.error(f"[Compiler] Lỗi khi ghi Database: {e}")
+        logger.error(f"[Compiler] Lỗi khi ghi Local JSON Log: {e}")
 
     return {
         "final_audit_log": audit_log
