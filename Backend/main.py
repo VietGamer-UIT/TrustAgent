@@ -21,7 +21,7 @@ app = FastAPI(title="TrustAgent API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Adjust this in production to specific frontend domains
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -191,14 +191,14 @@ async def tra_cuu_luat(request: LegalQueryRequest):
     if api_key:
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-2.0-flash-lite")
             prompt = f"Bạn là một chuyên gia pháp lý Việt Nam. Dựa vào ngữ cảnh sau để trả lời câu hỏi.\n\nNgữ cảnh:\n{context}\n\nCâu hỏi: {query}\n\nTrả lời ngắn gọn, chuyên nghiệp và có trích dẫn:"
             response = model.generate_content(prompt)
             answer = response.text
         except Exception as e:
             logger.error(f"Lỗi khi gọi Gemini: {e}")
-            answer = f"Không thể kết nối AI (Lỗi API). Dưới đây là trích dẫn luật thô:\n\n{context}"
+            answer = f"⚠️ **Hệ thống AI đang tạm thời gián đoạn (Vượt quá hạn mức API/Quota Limit).**\n\nTuy nhiên, hệ thống RAG đã tìm thấy các tài liệu pháp lý thực tế liên quan đến truy vấn của bạn. Dưới đây là các trích đoạn nguyên bản từ kho dữ liệu (chưa qua tổng hợp của AI):\n\n---\n\n{context}"
     else:
-        answer = f"Hệ thống chưa cấu hình GOOGLE_API_KEY. Dưới đây là trích dẫn luật thô từ hệ thống RAG:\n\n{context}"
+        answer = f"⚠️ **Hệ thống chưa cấu hình GOOGLE_API_KEY.**\n\nDưới đây là các trích đoạn nguyên bản từ kho dữ liệu RAG:\n\n---\n\n{context}"
         
     return LegalQueryResponse(answer=answer, context=context)

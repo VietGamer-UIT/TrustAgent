@@ -24,7 +24,7 @@ def _extract_contract_data(contract_text: str) -> dict:
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.0-flash-lite")
         
         prompt = f"""Bạn là hệ thống trích xuất dữ liệu hợp đồng chuyên nghiệp.
 Hãy đọc nội dung hợp đồng dưới đây và trả về định dạng JSON thuần túy.

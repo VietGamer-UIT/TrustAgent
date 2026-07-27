@@ -37,6 +37,8 @@ services:
       db:
         condition: service_healthy
     volumes:
+      # Mount toàn bộ source code Backend để dev không cần rebuild
+      - ./Backend:/app
       # Giữ lại thư mục uploads và ChromaDB
       - ./Backend/uploads:/app/uploads
       - ./Backend/rag/chroma_db:/app/rag/chroma_db

@@ -222,7 +222,7 @@ async def _goi_gemini_vision(duong_dan: str, prompt: str) -> dict[str, Any]:
 
     # Cấu hình Gemini
     genai.configure(api_key=_GOOGLE_API_KEY)
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-2.0-flash-lite")
 
     # Tạo phần nội dung multimodal
     image_part = {
