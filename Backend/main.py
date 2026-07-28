@@ -260,12 +260,15 @@ async def tra_cuu_luat(request: LegalQueryRequest):
     if api_key:
         try:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash")
+            model = genai.GenerativeModel("gemini-1.5-flash-latest")
             prompt = (
                 "Bạn là chuyên gia pháp lý Việt Nam của nền tảng TrustAgent.\n"
-                "Chỉ dựa vào NGỮ CẢNH bên dưới để trả lời. "
-                "Nếu ngữ cảnh thiếu, hãy nói rõ phần nào chưa đủ căn cứ.\n"
-                "Trả lời bằng tiếng Việt, rõ ràng, có mục: Kết luận · Căn cứ · Lưu ý.\n\n"
+                "Chỉ dựa vào NGỮ CẢNH bên dưới để trả lời.\n"
+                "Nhiệm vụ của bạn:\n"
+                "1. Trả lời trực tiếp, chính xác đúng trọng tâm câu hỏi của người dùng.\n"
+                "2. KHÔNG nêu tên các file .md trong nguồn, chỉ ghi rõ 'Theo Nghị định XX' hoặc 'Theo Thông tư YY'.\n"
+                "3. Làm nổi bật (highlight in đậm) các từ khóa quan trọng, số liệu, và điều khoản.\n"
+                "4. Nếu người dùng chỉ gõ tên Nghị định/Thông tư mà không hỏi cụ thể, hãy trích dẫn các nội dung chính của Nghị định/Thông tư đó từ ngữ cảnh.\n\n"
                 f"NGỮ CẢNH:\n{context[:8000]}\n\n"
                 f"CÂU HỎI:\n{query}\n"
             )

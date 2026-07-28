@@ -15,8 +15,8 @@ import { cn } from '@/lib/utils'
 const NAV = [
   { href: '/', label: 'Chứng từ', desc: 'Upload & kiểm toán hóa đơn', icon: FileSearch },
   { href: '/forensics', label: 'Forensics', desc: 'Kiểm chứng pháp lý Z3', icon: Shield },
-  { href: '/audit-trail', label: 'Audit Trail', desc: 'Lịch sử kiểm chứng', icon: ScrollText },
   { href: '/legal-knowledge', label: 'Tra cứu luật', desc: 'Hỏi đáp pháp lý (RAG)', icon: BookOpen },
+  { href: '/audit-trail', label: 'Audit Trail', desc: 'Lịch sử kiểm chứng', icon: ScrollText },
 ] as const
 
 export function AppShell({ children }: { children: ReactNode }) {

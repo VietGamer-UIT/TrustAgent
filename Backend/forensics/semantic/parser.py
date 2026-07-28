@@ -1,4 +1,4 @@
-﻿"""
+"""
 TrustAgent — Semantic Parser (Bộ Luật Việt Nam)
 
 Cầu nối giữa Neural Layer (Gemini LLM) và Symbolic Layer (Z3).
@@ -554,7 +554,7 @@ class MockSemanticParser:
 class GeminiSemanticParser:
     """Parser thực sự dùng Gemini API. Tự động fallback sang MockParser nếu lỗi."""
 
-    def __init__(self, api_key: str, model: str = "gemini-2.0-flash") -> None:
+    def __init__(self, api_key: str, model: str = "gemini-1.5-flash-latest") -> None:
         self._model_name = model
         self._mock = MockSemanticParser()
         self._client = None
@@ -622,7 +622,7 @@ class SemanticParser:
         # result.to_z3_data() == {"is_issuance": True, "has_audited_financial": False, ...}
     """
 
-    def __init__(self, api_key: str = "", model: str = "gemini-2.0-flash") -> None:
+    def __init__(self, api_key: str = "", model: str = "gemini-1.5-flash-latest") -> None:
         if api_key:
             self._backend: GeminiSemanticParser | MockSemanticParser = GeminiSemanticParser(api_key, model)
         else:
