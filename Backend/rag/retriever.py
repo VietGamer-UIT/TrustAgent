@@ -112,14 +112,28 @@ class LegalRetriever:
         logger.info("Legal RAG: đã nạp ChromaDB.")
 
     def retrieve(self, query: str, k: int = 3) -> str:
+        # Tầng 1: Lấy kết quả từ các file .md cục bộ (luật mới nhất)
+        local_results = _keyword_retrieve(query, k=k)
+        
+        # Tầng 2: Lấy thêm kết quả từ ChromaDB (Pháp điển) nếu có
+        chroma_results = ""
         if self._chroma_ready and self.vector_store is not None:
             try:
                 results = self.vector_store.similarity_search(query, k=k)
                 if results:
-                    return "\n\n".join(doc.page_content for doc in results)
+                    chroma_parts = []
+                    for doc in results:
+                        source = doc.metadata.get("source", "ChromaDB")
+                        ten_dieu = doc.metadata.get("ten_dieu", "")
+                        chroma_parts.append(f"### Nguồn: {source} ({ten_dieu})\n{doc.page_content}")
+                    chroma_results = "\n\n---\n\n".join(chroma_parts)
             except Exception as e:
-                logger.warning(f"Chroma search lỗi → fallback keyword: {e}")
-        return _keyword_retrieve(query, k=max(k, 3))
+                logger.warning(f"Chroma search lỗi: {e}")
+                
+        # Gộp chung kết quả, ưu tiên luật mới (cục bộ) lên trên
+        if chroma_results:
+            return f"{local_results}\n\n---\n\n{chroma_results}"
+        return local_results
 
 
 # Lazy singleton — tránh load nặng lúc import module
