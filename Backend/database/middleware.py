@@ -113,7 +113,7 @@ async def _write_audit_event(event_kwargs: dict[str, Any]) -> None:
     Persist a single AuditEvent row to PostgreSQL.
 
     Runs as a background task — errors here are LOGGED but never re-raised
-    so that audit failures cannot disrupt the main IR agent pipeline.
+    so that audit failures cannot disrupt the main TrustAgent pipeline.
     """
     try:
         async with AsyncSessionFactory() as session:
@@ -399,7 +399,7 @@ def set_audit_context(incident_id: str, graph_run_id: str) -> None:
     @audit_tool_call decorators pick up the correct correlation IDs.
 
         run_id = str(uuid.uuid4())
-        set_audit_context(incident_id="IR-2024-0047", graph_run_id=run_id)
+        set_audit_context(incident_id="TA-2024-0047", graph_run_id=run_id)
         result = await ir_graph.ainvoke(initial_state)
     """
     _current_incident_id.set(incident_id)
