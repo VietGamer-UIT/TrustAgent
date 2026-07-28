@@ -40,14 +40,13 @@ def main():
     ids = []
 
     for i, row in enumerate(dataset):
-        # row: {'id': ..., 'chu_de_id': ..., 'de_muc_id': ..., 'chu_de_name': ..., 'de_muc_name': ..., 'ten_dieu': ..., 'text': ...}
-        # Tạo metadata
-        chu_de = row.get("chu_de_name", "Không rõ chủ đề")
-        de_muc = row.get("de_muc_name", "Không rõ đề mục")
-        ten_dieu = row.get("ten_dieu", f"Điều {i}")
-        text = row.get("text", "")
+        # Tạo metadata từ các field chuẩn của dataset
+        chu_de = row.get("topic_title_vi", "Không rõ chủ đề")
+        de_muc = row.get("subject_title_vi", "Không rõ đề mục")
+        ten_dieu = row.get("article_title", f"Điều {i}")
+        text = row.get("content_text", "")
         
-        if not text.strip():
+        if not text or not text.strip():
             continue
             
         # Tạo đoạn văn bản đầy đủ ngữ cảnh để nhúng
