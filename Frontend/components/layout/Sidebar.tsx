@@ -119,16 +119,14 @@ export function Sidebar() {
       {/* ── Footer ──────────────────────────────────────────────────────── */}
       <div className="border-t border-border p-4">
         <a
-          href="https://github.com/VietGamer-UIT/TrustAgent"
-          target="_blank"
-          rel="noopener noreferrer"
+          href="/"
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
           <Github className="h-3.5 w-3.5" />
-          <span>VietGamer-UIT / TrustAgent</span>
+          <span>TrustAgent</span>
         </a>
         <p className="mt-1 px-2 text-[10px] text-muted-foreground/60">
-          © 2024 Đoàn Hoàng Việt (Việt Gamer)
+          © Đoàn Hoàng Việt (Việt Gamer)
         </p>
       </div>
     </aside>
