@@ -27,21 +27,22 @@ services:
     container_name: trustagent-backend
     ports:
       - "8000:8000"
-    # Truyền biến môi trường trực tiếp từ file (ưu tiên .env nếu có, fallback là .env.example)
     env_file:
       - ./.env
     environment:
-      # Ghi đè DATABASE_URL để đảm bảo host trỏ vào service 'db'
       - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/trustagent_db
+      # Đồng bộ key cho Forensics (đọc GEMINI_API_KEY hoặc GOOGLE_API_KEY)
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-${GOOGLE_API_KEY:-}}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-${GEMINI_API_KEY:-}}
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      # Mount toàn bộ source code Backend để dev không cần rebuild
       - ./Backend:/app
-      # Giữ lại thư mục uploads và ChromaDB
       - ./Backend/uploads:/app/uploads
       - ./Backend/rag/chroma_db:/app/rag/chroma_db
+      # Cho forensics.config đọc được file .env gốc
+      - ./.env:/app/../.env:ro
     networks:
       - trustagent-network
     restart: unless-stopped
@@ -50,12 +51,15 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        - BACKEND_URL=http://backend:8000
+        - NEXT_PUBLIC_API_URL=
     container_name: trustagent-frontend
     ports:
       - "3000:3000"
     environment:
-      # API endpoint mà UI sẽ trỏ tới
-      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_URL=
+      - BACKEND_URL=http://backend:8000
     depends_on:
       - backend
     networks:
