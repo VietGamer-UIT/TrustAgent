@@ -4,31 +4,50 @@ __pycache__/
 *$py.class
 *.so
 .Python
-env/
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-.env
-.venv
-venv/
-ENV/
-env.bak/
-venv.bak/
 
-# Project specific
-Backend/FastAPI/data_pipeline/invoices/
-Backend/FastAPI/rag/legal_data/
+# Virtual env
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets
+.env
+.env.local
+
+# Database
+Backend/*.db
+*.db
+
+# Node / Next.js
 node_modules/
-node_modules/
+Frontend/.next/
+Frontend/out/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs / cache
+*.log
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!Frontend/package.json
+!Frontend/package-lock.json
+!Frontend/tsconfig.json
+!Frontend/tailwind.config.js
+!Frontend/next.config.js
+Backend/audit_logs.json
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
