@@ -1,57 +1,137 @@
+"""
+TrustAgent — Legal RAG Retriever
+
+Ưu tiên keyword search trên file markdown (ổn định).
+Chroma/HuggingFace chỉ dùng khi sẵn sàng — không làm crash API.
+"""
+
+from __future__ import annotations
+
 import os
-from typing import List, Dict, Any
-from langchain_community.document_loaders import DirectoryLoader, UnstructuredMarkdownLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
+import re
+from typing import List
+
 from loguru import logger
 
 RAG_DATA_DIR = os.path.join(os.path.dirname(__file__), "legal_data")
+EXTRA_LEGAL_DIR = os.path.join(
+    os.path.dirname(__file__), "..", "data_pipeline", "legal_docs"
+)
 CHROMA_DB_DIR = os.path.join(os.path.dirname(__file__), "chroma_db")
 
+
+def _load_markdown_corpus() -> list[tuple[str, str]]:
+    """[(filename, content), ...]"""
+    docs: list[tuple[str, str]] = []
+    for folder in (RAG_DATA_DIR, EXTRA_LEGAL_DIR):
+        if not os.path.isdir(folder):
+            continue
+        for name in sorted(os.listdir(folder)):
+            if not name.lower().endswith(".md"):
+                continue
+            path = os.path.join(folder, name)
+            try:
+                with open(path, "r", encoding="utf-8", errors="ignore") as f:
+                    docs.append((name, f.read()))
+            except OSError as e:
+                logger.warning(f"Không đọc được {path}: {e}")
+    return docs
+
+
+def _keyword_retrieve(query: str, k: int = 4) -> str:
+    """Tìm đoạn liên quan bằng điểm từ khóa (luôn hoạt động)."""
+    corpus = _load_markdown_corpus()
+    if not corpus:
+        return (
+            "Chưa có tài liệu pháp lý trong kho. "
+            "Thêm file .md vào Backend/rag/legal_data/."
+        )
+
+    tokens = [
+        t for t in re.findall(r"[\wÀ-ỹ]{2,}", query.lower())
+        if t not in {"và", "của", "cho", "với", "các", "một", "này", "khi", "là", "được", "trong"}
+    ]
+    if not tokens:
+        tokens = [query.lower().strip()]
+
+    scored: list[tuple[float, str, str]] = []
+    for fname, content in corpus:
+        lower = content.lower()
+        score = sum(lower.count(t) for t in tokens)
+        # boost filename matches
+        score += sum(3 for t in tokens if t in fname.lower())
+        if score <= 0:
+            continue
+        # Lấy đoạn chứa từ khóa đầu tiên
+        snippet = content
+        for t in tokens:
+            idx = lower.find(t)
+            if idx >= 0:
+                start = max(0, idx - 200)
+                end = min(len(content), idx + 900)
+                snippet = content[start:end].strip()
+                break
+        scored.append((score, fname, snippet))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top = scored[:k] if scored else [
+        (0, corpus[0][0], corpus[0][1][:1200])
+    ]
+
+    parts = []
+    for score, fname, snippet in top:
+        parts.append(f"### Nguồn: {fname}\n{snippet}")
+    return "\n\n---\n\n".join(parts)
+
+
 class LegalRetriever:
-    def __init__(self):
-        self.embeddings = HuggingFaceEmbeddings(model_name="keepitreal/vietnamese-sbert")
+    def __init__(self) -> None:
         self.vector_store = None
-        self._init_vector_store()
-
-    def _init_vector_store(self):
-        if os.path.exists(CHROMA_DB_DIR) and os.listdir(CHROMA_DB_DIR):
-            logger.info("Loading existing ChromaDB from disk.")
-            self.vector_store = Chroma(persist_directory=CHROMA_DB_DIR, embedding_function=self.embeddings)
+        self._chroma_ready = False
+        # Mặc định keyword RAG (ổn định). Bật Chroma bằng TRUSTAGENT_USE_CHROMA=1
+        if os.getenv("TRUSTAGENT_USE_CHROMA", "").strip() in ("1", "true", "yes"):
+            try:
+                self._try_init_chroma()
+            except Exception as e:
+                logger.warning(f"Chroma/HF không khả dụng, dùng keyword RAG: {e}")
         else:
-            logger.info("ChromaDB not found. Initializing from markdown files...")
-            self.vector_store = self._build_index()
+            logger.info("Legal RAG: chế độ keyword (ổn định).")
 
-    def _build_index(self):
-        if not os.path.exists(RAG_DATA_DIR):
-            os.makedirs(RAG_DATA_DIR, exist_ok=True)
-            logger.warning(f"RAG Data directory created at {RAG_DATA_DIR}. Please add .md files here.")
-            return Chroma.from_texts(["Dữ liệu pháp lý trống."], self.embeddings, persist_directory=CHROMA_DB_DIR)
+    def _try_init_chroma(self) -> None:
+        if not (os.path.exists(CHROMA_DB_DIR) and os.listdir(CHROMA_DB_DIR)):
+            return
+        from langchain_community.vectorstores import Chroma
+        from langchain_huggingface import HuggingFaceEmbeddings
 
-        loader = DirectoryLoader(RAG_DATA_DIR, glob="**/*.md", loader_cls=UnstructuredMarkdownLoader)
-        docs = loader.load()
-
-        if not docs:
-            logger.warning("No markdown documents found for RAG.")
-            return Chroma.from_texts(["Dữ liệu pháp lý trống."], self.embeddings, persist_directory=CHROMA_DB_DIR)
-
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        splits = text_splitter.split_documents(docs)
-
-        vector_store = Chroma.from_documents(documents=splits, embedding=self.embeddings, persist_directory=CHROMA_DB_DIR)
-        logger.success(f"Built ChromaDB index with {len(splits)} chunks.")
-        return vector_store
+        embeddings = HuggingFaceEmbeddings(model_name="keepitreal/vietnamese-sbert")
+        self.vector_store = Chroma(
+            persist_directory=CHROMA_DB_DIR,
+            embedding_function=embeddings,
+        )
+        self._chroma_ready = True
+        logger.info("Legal RAG: đã nạp ChromaDB.")
 
     def retrieve(self, query: str, k: int = 3) -> str:
-        if not self.vector_store:
-            return ""
-        results = self.vector_store.similarity_search(query, k=k)
-        context = "\n\n".join([doc.page_content for doc in results])
-        return context
+        if self._chroma_ready and self.vector_store is not None:
+            try:
+                results = self.vector_store.similarity_search(query, k=k)
+                if results:
+                    return "\n\n".join(doc.page_content for doc in results)
+            except Exception as e:
+                logger.warning(f"Chroma search lỗi → fallback keyword: {e}")
+        return _keyword_retrieve(query, k=max(k, 3))
 
-# Singleton instance
-retriever_instance = LegalRetriever()
+
+# Lazy singleton — tránh load nặng lúc import module
+_retriever: LegalRetriever | None = None
+
+
+def get_retriever() -> LegalRetriever:
+    global _retriever
+    if _retriever is None:
+        _retriever = LegalRetriever()
+    return _retriever
+
 
 def get_legal_context(query: str) -> str:
-    return retriever_instance.retrieve(query)
+    return get_retriever().retrieve(query)
