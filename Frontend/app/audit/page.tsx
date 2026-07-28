@@ -135,7 +135,7 @@ export default function AuditPage() {
           {/* Search Bar */}
           <div className="flex gap-2">
             <Input
-              placeholder="Nhập ID Sự Cố (ví dụ: IR-2024-DEMO-001)"
+              placeholder="Nhập ID Sự Cố (ví dụ: TA-2024-DEMO-001)"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
