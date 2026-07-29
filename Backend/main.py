@@ -290,7 +290,6 @@ async def tra_cuu_luat(request: LegalQueryRequest):
                     raise  # Lỗi khác thì raise ngay
         except Exception as e:
             logger.error(f"Lỗi khi gọi Gemini (tất cả models): {e}")
-            # Phân loại lỗi để hiển thị thông báo phù hợp
             err_str = str(e).lower()
             if any(k in err_str for k in ["quota", "429", "resource_exhausted"]):
                 answer = (
@@ -307,6 +306,15 @@ async def tra_cuu_luat(request: LegalQueryRequest):
                     "liên quan mà TrustAgent tìm được trong kho:\n\n"
                     f"{context}"
                 )
+        # ── Fallback: tất cả models đều hết quota (loop kết thúc mà không break)
+        if not answer.strip():
+            answer = (
+                "### ⚠️ Quota tạm thời — Chế độ tra cứu tài liệu\n\n"
+                "Tất cả mô hình AI đang bận. TrustAgent trả về đoạn luật gốc "
+                "khớp với câu hỏi của bạn:\n\n"
+                f"{context[:4000]}"
+                "\n\n_Hệ thống sẽ tự phục hồi sau vài phút._"
+            )
     else:
         answer = (
             "### Kết quả tra cứu tài liệu pháp lý\n\n"
