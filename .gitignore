@@ -23,6 +23,8 @@ ENV/
 # Database
 Backend/*.db
 *.db
+Backend/rag/chroma_db/
+Backend/forensics/rag/.chroma_cache/
 
 # Node / Next.js
 node_modules/
