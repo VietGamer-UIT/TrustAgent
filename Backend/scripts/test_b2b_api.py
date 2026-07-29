@@ -13,11 +13,16 @@ import json
 import sys
 import time
 
+# Fix UTF-8 encoding on Windows PowerShell
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
+
 try:
     import requests
 except ImportError:
-    print("Cài requests trước: pip install requests")
+    print("Cai requests truoc: pip install requests")
     sys.exit(1)
+
 
 # Màu sắc terminal
 GREEN = "\033[92m"
@@ -29,23 +34,23 @@ RESET = "\033[0m"
 
 TEST_CASES = [
     {
-        "name": "✅ Hợp đồng hợp lệ",
-        "description": "Hợp đồng cung cấp dịch vụ phần mềm trị giá 100 triệu VNĐ. Mức phạt vi phạm 5 triệu đồng.",
+        "name": "OK Bao ve du lieu hop le",
+        "description": "He thong xu ly du lieu ten, email cua 500 nhan vien de quan ly nhan su. Da co phan quyen truy cap, ma hoa du lieu, va ghi log day du.",
         "expect_compliant": True,
     },
     {
-        "name": "❌ Phạt vi phạm vượt 8%",
-        "description": "Hợp đồng cung cấp dịch vụ tư vấn 100 triệu VNĐ. Điều khoản phạt vi phạm là 15 triệu VNĐ (vượt 8%).",
+        "name": "FAIL Phat vi pham vuot 8%",
+        "description": "Hop dong cung cap dich vu tu van 100 trieu VND. Dieu khoan phat vi pham la 15 trieu VND (vuot 8%).",
         "expect_compliant": False,
     },
     {
-        "name": "❌ Xử lý vân tay chưa phân quyền",
-        "description": "Hệ thống AI xử lý dữ liệu vân tay của 2000 nhân viên để chấm công, chưa thiết lập phân quyền truy cập.",
+        "name": "FAIL Xu ly van tay chua phan quyen",
+        "description": "He thong AI xu ly du lieu van tay cua 2000 nhan vien de cham cong, chua thiet lap phan quyen truy cap.",
         "expect_compliant": False,
     },
     {
-        "name": "❌ Trái phiếu chưa công bố đúng hạn",
-        "description": "Doanh nghiệp phát hành trái phiếu, nhưng sau 7 ngày vẫn chưa công bố thông tin trên thị trường.",
+        "name": "FAIL Trai phieu chua cong bo dung han",
+        "description": "Doanh nghiep phat hanh trai phieu, nhung sau 7 ngay van chua cong bo thong tin tren thi truong.",
         "expect_compliant": False,
     },
 ]
