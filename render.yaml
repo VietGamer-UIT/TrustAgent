@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: trustagent-api
+    env: python
+    region: singapore  # Gần Việt Nam nhất
+    plan: free
+    buildCommand: "pip install -r Backend/requirements.txt"
+    startCommand: "cd Backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false  # Nhập thủ công trên dashboard Render
+      - key: TRUSTAGENT_API_KEY
+        sync: false  # API key cho đối tác B2B
+      - key: TRUSTAGENT_USE_CHROMA
+        value: "0"  # Tắt ChromaDB trên Render (dùng keyword search)
+      - key: LOG_LEVEL
+        value: "INFO"
+      - key: APP_ENV
+        value: "production"
+      # SQLite (không cần PostgreSQL cho demo)
+      - key: DATABASE_URL
+        value: "sqlite+aiosqlite:///./trustagent_forensics.db"

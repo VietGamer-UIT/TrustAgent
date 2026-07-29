@@ -11,7 +11,6 @@ from dotenv import load_dotenv
 load_dotenv()
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
-import google.generativeai as genai
 from rag.retriever import get_legal_context
 
 from fastapi import FastAPI, UploadFile, File, Request
@@ -23,6 +22,7 @@ from core.graph_builder import build_trustagent_graph
 from core.state import TrustAgentState
 from forensics.api.router import mount_forensics_routes
 from forensics.database.session import create_tables, dispose_engine
+from api.b2b import router as b2b_router
 
 
 @asynccontextmanager
@@ -60,6 +60,9 @@ app.add_middleware(
 
 # Forensics feature routes: /api/v1/forensics/verify, /api/v1/forensics/audit
 mount_forensics_routes(app)
+
+# B2B Enterprise API: /api/v1/audit
+app.include_router(b2b_router)
 
 # Khởi tạo Graph kiểm toán chứng từ
 graph = build_trustagent_graph()
@@ -259,29 +262,51 @@ async def tra_cuu_luat(request: LegalQueryRequest):
 
     if api_key:
         try:
+            import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-1.5-flash-latest")
-            prompt = (
-                "Bạn là chuyên gia pháp lý Việt Nam của nền tảng TrustAgent.\n"
-                "Chỉ dựa vào NGỮ CẢNH bên dưới để trả lời.\n"
-                "Nhiệm vụ của bạn:\n"
-                "1. Trả lời trực tiếp, chính xác đúng trọng tâm câu hỏi của người dùng.\n"
-                "2. KHÔNG nêu tên các file .md trong nguồn, chỉ ghi rõ 'Theo Nghị định XX' hoặc 'Theo Thông tư YY'.\n"
-                "3. Làm nổi bật (highlight in đậm) các từ khóa quan trọng, số liệu, và điều khoản.\n"
-                "4. Nếu người dùng chỉ gõ tên Nghị định/Thông tư mà không hỏi cụ thể, hãy trích dẫn các nội dung chính của Nghị định/Thông tư đó từ ngữ cảnh.\n\n"
-                f"NGỮ CẢNH:\n{context[:8000]}\n\n"
-                f"CÂU HỎI:\n{query}\n"
-            )
-            response = model.generate_content(prompt)
-            answer = (response.text or "").strip()
+            # Thử gemini-1.5-flash trước, fallback sang gemini-pro nếu quota hết
+            for model_name in ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]:
+                try:
+                    model = genai.GenerativeModel(model_name)
+                    prompt = (
+                        "Bạn là chuyên gia pháp lý Việt Nam của nền tảng TrustAgent.\n"
+                        "Chỉ dựa vào NGỮ CẢNH bên dưới để trả lời.\n"
+                        "Nhiệm vụ của bạn:\n"
+                        "1. Trả lời trực tiếp, chính xác đúng trọng tâm câu hỏi của người dùng.\n"
+                        "2. KHÔNG nêu tên các file .md trong nguồn, chỉ ghi rõ 'Theo Nghị định XX' hoặc 'Theo Thông tư YY'.\n"
+                        "3. Làm nổi bật (highlight in đậm) các từ khóa quan trọng, số liệu, và điều khoản.\n"
+                        "4. Nếu người dùng chỉ gõ tên Nghị định/Thông tư mà không hỏi cụ thể, hãy trích dẫn các nội dung chính của Nghị định/Thông tư đó từ ngữ cảnh.\n\n"
+                        f"NGỮ CẢNH:\n{context[:8000]}\n\n"
+                        f"CÂU HỎI:\n{query}\n"
+                    )
+                    response = model.generate_content(prompt)
+                    answer = (response.text or "").strip()
+                    break  # Thành công → thoát vòng lặp
+                except Exception as model_err:
+                    err_str = str(model_err).lower()
+                    if any(k in err_str for k in ["quota", "429", "resource_exhausted", "rate"]):
+                        logger.warning(f"Quota hết cho {model_name}, thử model khác...")
+                        continue
+                    raise  # Lỗi khác thì raise ngay
         except Exception as e:
-            logger.error(f"Lỗi khi gọi Gemini: {e}")
-            answer = (
-                "### Kết luận tạm thời (chế độ tra cứu tài liệu)\n\n"
-                "Không gọi được mô hình AI lúc này. Dưới đây là các đoạn luật "
-                "liên quan mà TrustAgent tìm được trong kho:\n\n"
-                f"{context}"
-            )
+            logger.error(f"Lỗi khi gọi Gemini (tất cả models): {e}")
+            # Phân loại lỗi để hiển thị thông báo phù hợp
+            err_str = str(e).lower()
+            if any(k in err_str for k in ["quota", "429", "resource_exhausted"]):
+                answer = (
+                    "### ⚠️ API đang bận (Quota tạm thời)"
+                    "\n\nTrustAgent đang hoạt động ở **chế độ tra cứu tài liệu** "
+                    "(không cần AI). Dưới đây là các đoạn luật liên quan:\n\n"
+                    f"{context[:3000]}"
+                    "\n\n_Hệ thống sẽ tự phục hồi sau vài phút._"
+                )
+            else:
+                answer = (
+                    "### Kết luận tạm thời (chế độ tra cứu tài liệu)\n\n"
+                    "Không gọi được mô hình AI lúc này. Dưới đây là các đoạn luật "
+                    "liên quan mà TrustAgent tìm được trong kho:\n\n"
+                    f"{context}"
+                )
     else:
         answer = (
             "### Kết quả tra cứu tài liệu pháp lý\n\n"
