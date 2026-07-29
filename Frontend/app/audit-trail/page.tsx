@@ -19,11 +19,17 @@ function stripAnsi(s: string): string {
     .replace(/\x1b\[[0-9;]*m/g, '')
 }
 
-/** Format timestamp sang múi giờ Việt Nam GMT+7 */
+/** Format timestamp sang múi giờ Việt Nam GMT+7 — luôn coi DB timestamp là UTC */
 function formatVNTime(isoString: string | null | undefined): string {
   if (!isoString) return '—'
   try {
-    const d = new Date(isoString)
+    // Các record cũ trong SQLite lưu dạng "2026-07-29T08:49:58" (không có Z/+00:00)
+    // → JS sẽ hiểu là local time thay vì UTC → sai múi giờ
+    // Fix: nếu không có suffix timezone, LUÔN coi là UTC bằng cách thêm "Z"
+    const hasTimezone = isoString.endsWith('Z') || /[+-]\d{2}:\d{2}$/.test(isoString)
+    const utcString = hasTimezone ? isoString : isoString + 'Z'
+    const d = new Date(utcString)
+    if (isNaN(d.getTime())) return isoString
     return d.toLocaleString('vi-VN', {
       timeZone: 'Asia/Ho_Chi_Minh',
       hour: '2-digit',

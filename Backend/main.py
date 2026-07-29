@@ -254,7 +254,7 @@ async def tra_cuu_luat(request: LegalQueryRequest):
     if not context.strip():
         context = (
             "Không tìm thấy đoạn luật khớp trực tiếp trong kho tài liệu hiện có "
-            "(NĐ 356, 165, 200, 252, TT 90, Luật Thương mại, NĐ 123)."
+            "(NĐ 356, 165, 200, 252, TT 90)."
         )
 
     api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY") or ""
@@ -264,65 +264,101 @@ async def tra_cuu_luat(request: LegalQueryRequest):
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            # Thử gemini-1.5-flash trước, fallback sang gemini-pro nếu quota hết
-            for model_name in ["gemini-1.5-flash", "gemini-1.5-flash-latest", "gemini-pro"]:
+            # gemini-2.0-flash có quota pool riêng — thử trước
+            _models = [
+                "gemini-2.0-flash",
+                "gemini-2.0-flash-lite",
+                "gemini-1.5-flash-8b",
+                "gemini-1.5-flash",
+                "gemini-1.5-flash-latest",
+                "gemini-pro",
+            ]
+            prompt = (
+                "Bạn là chuyên gia pháp lý Việt Nam của nền tảng TrustAgent.\n"
+                "Chỉ dựa vào NGỮ CẢNH bên dưới để trả lời câu hỏi.\n\n"
+                "QUY TẮC:\n"
+                "1. Trả lời NGẮN GỌN, TRỰC TIẾP, đúng trọng tâm câu hỏi (tối đa 5-7 câu).\n"
+                "2. Bắt đầu bằng câu trả lời chính (số liệu, thời hạn, quy định cụ thể).\n"
+                "3. In đậm (**) các số liệu, thời hạn, tên điều khoản quan trọng.\n"
+                "4. Chỉ viết 'Theo Nghị định XX' hoặc 'Theo Thông tư YY' — KHÔNG nêu tên file .md.\n"
+                "5. Nếu ngữ cảnh không đủ để trả lời, hãy nói rõ giới hạn đó.\n\n"
+                f"NGỮ CẢNH:\n{context[:6000]}\n\n"
+                f"CÂU HỎI: {query}\n"
+            )
+            for model_name in _models:
                 try:
                     model = genai.GenerativeModel(model_name)
-                    prompt = (
-                        "Bạn là chuyên gia pháp lý Việt Nam của nền tảng TrustAgent.\n"
-                        "Chỉ dựa vào NGỮ CẢNH bên dưới để trả lời.\n"
-                        "Nhiệm vụ của bạn:\n"
-                        "1. Trả lời trực tiếp, chính xác đúng trọng tâm câu hỏi của người dùng.\n"
-                        "2. KHÔNG nêu tên các file .md trong nguồn, chỉ ghi rõ 'Theo Nghị định XX' hoặc 'Theo Thông tư YY'.\n"
-                        "3. Làm nổi bật (highlight in đậm) các từ khóa quan trọng, số liệu, và điều khoản.\n"
-                        "4. Nếu người dùng chỉ gõ tên Nghị định/Thông tư mà không hỏi cụ thể, hãy trích dẫn các nội dung chính của Nghị định/Thông tư đó từ ngữ cảnh.\n\n"
-                        f"NGỮ CẢNH:\n{context[:8000]}\n\n"
-                        f"CÂU HỎI:\n{query}\n"
-                    )
                     response = model.generate_content(prompt)
                     answer = (response.text or "").strip()
-                    break  # Thành công → thoát vòng lặp
+                    if answer:
+                        logger.info(f"RAG OK với model: {model_name}")
+                        break
                 except Exception as model_err:
                     err_str = str(model_err).lower()
                     if any(k in err_str for k in ["quota", "429", "resource_exhausted", "rate"]):
                         logger.warning(f"Quota hết cho {model_name}, thử model khác...")
                         continue
-                    raise  # Lỗi khác thì raise ngay
+                    logger.error(f"Lỗi model {model_name}: {model_err}")
+                    break  # Lỗi khác (auth, network) → dừng ngay
         except Exception as e:
-            logger.error(f"Lỗi khi gọi Gemini (tất cả models): {e}")
-            err_str = str(e).lower()
-            if any(k in err_str for k in ["quota", "429", "resource_exhausted"]):
-                answer = (
-                    "### ⚠️ API đang bận (Quota tạm thời)"
-                    "\n\nTrustAgent đang hoạt động ở **chế độ tra cứu tài liệu** "
-                    "(không cần AI). Dưới đây là các đoạn luật liên quan:\n\n"
-                    f"{context[:3000]}"
-                    "\n\n_Hệ thống sẽ tự phục hồi sau vài phút._"
-                )
-            else:
-                answer = (
-                    "### Kết luận tạm thời (chế độ tra cứu tài liệu)\n\n"
-                    "Không gọi được mô hình AI lúc này. Dưới đây là các đoạn luật "
-                    "liên quan mà TrustAgent tìm được trong kho:\n\n"
-                    f"{context}"
-                )
-        # ── Fallback: tất cả models đều hết quota (loop kết thúc mà không break)
-        if not answer.strip():
-            answer = (
-                "### ⚠️ Quota tạm thời — Chế độ tra cứu tài liệu\n\n"
-                "Tất cả mô hình AI đang bận. TrustAgent trả về đoạn luật gốc "
-                "khớp với câu hỏi của bạn:\n\n"
-                f"{context[:4000]}"
-                "\n\n_Hệ thống sẽ tự phục hồi sau vài phút._"
-            )
-    else:
-        answer = (
-            "### Kết quả tra cứu tài liệu pháp lý\n\n"
-            "Chưa cấu hình `GOOGLE_API_KEY` — TrustAgent trả về đoạn luật gốc "
-            "khớp với câu hỏi của bạn:\n\n"
-            f"{context}\n\n"
-            "_Gợi ý: thêm GOOGLE_API_KEY vào `.env` để nhận câu trả lời tổng hợp "
-            "bằng ngôn ngữ tự nhiên._"
-        )
+            logger.error(f"Lỗi khởi tạo Gemini: {e}")
+
+    # ── Nếu AI không trả lời được → tạo câu trả lời ngôn ngữ tự nhiên từ context ──
+    if not answer.strip():
+        answer = _synthesize_natural_answer(query, context)
 
     return LegalQueryResponse(answer=answer, context=context)
+
+
+def _synthesize_natural_answer(query: str, context: str) -> str:
+    """
+    Tạo câu trả lời ngôn ngữ tự nhiên từ context khi AI không khả dụng.
+    Trích xuất các câu chứa từ khóa trực tiếp liên quan đến câu hỏi.
+    """
+    import re
+
+    # Tách context thành các câu
+    sentences = re.split(r"(?<=[.!?])\s+|(?<=\n)", context)
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 30]
+
+    # Lấy từ khóa từ câu hỏi (bỏ stop words)
+    stop = {"là", "bao", "lâu", "gì", "nào", "cần", "có", "theo", "thế", "như",
+            "của", "và", "hoặc", "để", "với", "trong", "tại", "về", "các", "một",
+            "được", "không", "khi", "cho", "sẽ", "đã", "đang", "này", "đó"}
+    tokens = [t.lower() for t in re.findall(r"[\wÀ-ỹ]{2,}", query) if t.lower() not in stop]
+
+    # Score từng câu
+    scored = []
+    for s in sentences:
+        sl = s.lower()
+        score = sum(sl.count(t) for t in tokens)
+        # Boost câu có số liệu (thời hạn, %)
+        if re.search(r"\d+\s*(ngày|giờ|năm|tháng|%|triệu|tỷ|khoản|điều)", sl):
+            score += 3
+        if score > 0:
+            scored.append((score, s))
+
+    scored.sort(key=lambda x: x[0], reverse=True)
+    top_sentences = [s for _, s in scored[:5]]
+
+    # Xác định nguồn luật từ context
+    law_refs = []
+    for pattern in [r"Nghị định \d+/\d+", r"Thông tư \d+/\d+", r"Điều \d+", r"Khoản \d+"]:
+        found = re.findall(pattern, context)
+        law_refs.extend(found[:2])
+    law_ref_str = ", ".join(dict.fromkeys(law_refs)[:3]) if law_refs else "các quy định hiện hành"
+
+    if not top_sentences:
+        return (
+            f"Chưa tìm thấy thông tin trực tiếp về câu hỏi này trong kho tài liệu pháp lý. "
+            f"Vui lòng thử hỏi cụ thể hơn hoặc tham khảo trực tiếp {law_ref_str}."
+        )
+
+    body = " ".join(top_sentences)
+    return (
+        f"Căn cứ {law_ref_str}, TrustAgent tổng hợp thông tin liên quan:\n\n"
+        f"{body}\n\n"
+        f"_Lưu ý: Đây là trích dẫn trực tiếp từ văn bản pháp lý. "
+        f"Để được tư vấn chuyên sâu, vui lòng tham khảo chuyên gia pháp lý._"
+    )
+

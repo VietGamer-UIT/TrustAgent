@@ -1,4 +1,4 @@
-﻿"""
+"""
 TrustAgent — Database Layer (Phase 4)
 
 SQLAlchemy ORM models cho audit trail bất biến.
@@ -135,7 +135,7 @@ class AuditLog(Base):
         """Chuyển record thành dict để serialize JSON."""
         return {
             "id": self.id,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "created_at": (self.created_at.isoformat() + "Z").replace("+00:00Z", "Z") if self.created_at else None,
             "user_input": self.user_input,
             "scenario_type": self.scenario_type,
             "legal_thresholds": self.legal_thresholds,
