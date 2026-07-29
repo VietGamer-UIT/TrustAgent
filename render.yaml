@@ -4,7 +4,8 @@ services:
     env: python
     region: singapore  # Gần Việt Nam nhất
     plan: free
-    buildCommand: "pip install -r Backend/requirements.txt"
+    pythonVersion: "3.11.9"
+    buildCommand: "pip install -r requirements-render.txt"
     startCommand: "cd Backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
     envVars:

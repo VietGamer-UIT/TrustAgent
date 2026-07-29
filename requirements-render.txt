@@ -1,0 +1,45 @@
+# =============================================================================
+# TrustAgent :: Production Dependencies for Render.com
+# Python 3.11.9 — Minimal build, no heavy ML/scraping libs
+# =============================================================================
+
+# --- Core web framework ---
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+python-multipart>=0.0.9
+
+# --- LangGraph / LangChain multi-agent ---
+langgraph==0.2.34
+langchain==0.3.2
+langchain-core==0.3.9
+langchain-community==0.3.1
+langchain-google-genai==2.0.1
+google-generativeai==0.8.2
+
+# --- Pydantic v2 ---
+pydantic>=2.7.0
+pydantic-settings>=2.2
+
+# --- Database (SQLite async cho free tier) ---
+sqlalchemy[asyncio]>=2.0.28
+aiosqlite>=0.19.0
+alembic>=1.13.0
+
+# --- HTTP clients ---
+aiohttp>=3.9.0
+httpx>=0.27.0
+
+# --- Typing + config ---
+typing-extensions>=4.11.0
+python-dotenv>=1.0.1
+
+# --- Z3 Symbolic Engine (core feature) ---
+z3-solver>=4.12.0
+
+# --- Logging ---
+loguru==0.7.2
+
+# --- Utilities ---
+requests==2.31.0
+rich==13.7.0
+markdown>=3.6
