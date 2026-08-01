@@ -39,7 +39,7 @@ def _load_markdown_corpus() -> list[tuple[str, str]]:
 
 
 def _keyword_retrieve(query: str, k: int = 4) -> str:
-    """Tìm đoạn liên quan bằng điểm từ khóa (luôn hoạt động)."""
+    """Tìm đoạn liên quan bằng điểm từ khóa (luôn hoạt động), chia nhỏ theo đoạn văn."""
     corpus = _load_markdown_corpus()
     if not corpus:
         return (
@@ -47,34 +47,50 @@ def _keyword_retrieve(query: str, k: int = 4) -> str:
             "Thêm file .md vào Backend/rag/legal_data/."
         )
 
+    stopwords = {"và", "của", "cho", "với", "các", "một", "này", "khi", "là", "được", "trong", "có", "không", "gì", "thế", "nào", "theo", "những", "thì", "mà", "làm", "cần", "về", "như"}
     tokens = [
         t for t in re.findall(r"[\wÀ-ỹ]{2,}", query.lower())
-        if t not in {"và", "của", "cho", "với", "các", "một", "này", "khi", "là", "được", "trong"}
+        if t not in stopwords
     ]
     if not tokens:
         tokens = [query.lower().strip()]
 
     scored: list[tuple[float, str, str]] = []
     for fname, content in corpus:
-        lower = content.lower()
-        score = sum(lower.count(t) for t in tokens)
-        # boost filename matches
-        score += sum(3 for t in tokens if t in fname.lower())
-        if score <= 0:
-            continue
-        # Lấy đoạn chứa từ khóa đầu tiên
-        snippet = content
-        for t in tokens:
-            idx = lower.find(t)
-            if idx >= 0:
-                start = max(0, idx - 200)
-                end = min(len(content), idx + 900)
-                snippet = content[start:end].strip()
-                break
-        scored.append((score, fname, snippet))
+        # Tách content thành các đoạn (chunk)
+        chunks = [c.strip() for c in re.split(r'\n\s*\n', content) if len(c.strip()) > 50]
+        
+        # Gắn tên file vào mỗi chunk để dễ match số hiệu nghị định (vd: 356)
+        for chunk in chunks:
+            chunk_text = f"[{fname}] {chunk}"
+            lower = chunk_text.lower()
+            
+            unique_matches = sum(1 for t in tokens if t in lower)
+            if unique_matches == 0:
+                continue
+            
+            digit_boost = sum(500 for t in tokens if t.isdigit() and t in lower)
+            frequency_score = sum(lower.count(t) for t in tokens)
+            filename_boost = sum(100 for t in tokens if t in fname.lower())
+            
+            score = (unique_matches * 1000) + digit_boost + filename_boost + frequency_score
+            
+            if score > 0:
+                scored.append((score, fname, chunk))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    top = scored[:k] if scored else [
+    
+    # Tránh trùng lặp nội dung
+    top_unique = []
+    seen = set()
+    for item in scored:
+        if item[2] not in seen:
+            seen.add(item[2])
+            top_unique.append(item)
+        if len(top_unique) >= k:
+            break
+            
+    top = top_unique if top_unique else [
         (0, corpus[0][0], corpus[0][1][:1200])
     ]
 
@@ -100,7 +116,7 @@ class LegalRetriever:
     def _try_init_chroma(self) -> None:
         if not (os.path.exists(CHROMA_DB_DIR) and os.listdir(CHROMA_DB_DIR)):
             return
-        from langchain_community.vectorstores import Chroma
+        from langchain_chroma import Chroma
         from langchain_huggingface import HuggingFaceEmbeddings
 
         embeddings = HuggingFaceEmbeddings(model_name="keepitreal/vietnamese-sbert")

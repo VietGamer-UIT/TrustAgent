@@ -3,7 +3,7 @@ import sys
 import argparse
 from loguru import logger
 from datasets import load_dataset
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 
 # Thiết lập đường dẫn tĩnh tương đối

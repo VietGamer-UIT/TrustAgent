@@ -1,4 +1,4 @@
-﻿"""
+"""
 TrustAgent — Legal RAG Retriever
 
 Nhiệm vụ: Lấy đúng văn bản luật từ legal_data/ dựa trên ScenarioType.
@@ -103,12 +103,9 @@ class LegalRetriever:
         """Thử khởi tạo ChromaDB. Nếu fail → dùng keyword search."""
         try:
             import chromadb
-            from chromadb.config import Settings
-            client = chromadb.Client(Settings(
-                chroma_db_impl="duckdb+parquet",
-                persist_directory=str(self._data_dir / ".chroma_cache"),
-                anonymized_telemetry=False,
-            ))
+            client = chromadb.PersistentClient(
+                path=str(self._data_dir / ".chroma_cache")
+            )
             self._collection = client.get_or_create_collection(
                 name="legal_documents",
                 metadata={"hnsw:space": "cosine"},

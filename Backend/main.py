@@ -262,16 +262,13 @@ async def tra_cuu_luat(request: LegalQueryRequest):
 
     if api_key:
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
+            from google import genai
+            client = genai.Client(api_key=api_key)
             # gemini-2.0-flash có quota pool riêng — thử trước
             _models = [
-                "gemini-2.0-flash",
-                "gemini-2.0-flash-lite",
-                "gemini-1.5-flash-8b",
-                "gemini-1.5-flash",
-                "gemini-1.5-flash-latest",
-                "gemini-pro",
+                "gemini-3.6-flash",
+                "gemini-3.5-flash",
+                "gemini-3.1-flash-lite"
             ]
             prompt = (
                 "Bạn là chuyên gia pháp lý Việt Nam của nền tảng TrustAgent.\n"
@@ -287,16 +284,18 @@ async def tra_cuu_luat(request: LegalQueryRequest):
             )
             for model_name in _models:
                 try:
-                    model = genai.GenerativeModel(model_name)
-                    response = model.generate_content(prompt)
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                    )
                     answer = (response.text or "").strip()
                     if answer:
                         logger.info(f"RAG OK với model: {model_name}")
                         break
                 except Exception as model_err:
                     err_str = str(model_err).lower()
-                    if any(k in err_str for k in ["quota", "429", "resource_exhausted", "rate"]):
-                        logger.warning(f"Quota hết cho {model_name}, thử model khác...")
+                    if any(k in err_str for k in ["quota", "429", "resource_exhausted", "rate", "404", "not_found", "not found"]):
+                        logger.warning(f"Lỗi {model_name}: {err_str[:50]}... thử model khác")
                         continue
                     logger.error(f"Lỗi model {model_name}: {model_err}")
                     break  # Lỗi khác (auth, network) → dừng ngay
@@ -317,36 +316,63 @@ def _synthesize_natural_answer(query: str, context: str) -> str:
     """
     import re
 
-    # Tách context thành các câu
-    sentences = re.split(r"(?<=[.!?])\s+|(?<=\n)", context)
-    sentences = [s.strip() for s in sentences if len(s.strip()) > 30]
-
+    # Tách context thành các đoạn văn (paragraphs) thay vì câu
+    paragraphs = [p.strip() for p in context.split('\n\n') if len(p.strip()) > 10]
+    
     # Lấy từ khóa từ câu hỏi (bỏ stop words)
     stop = {"là", "bao", "lâu", "gì", "nào", "cần", "có", "theo", "thế", "như",
             "của", "và", "hoặc", "để", "với", "trong", "tại", "về", "các", "một",
             "được", "không", "khi", "cho", "sẽ", "đã", "đang", "này", "đó"}
     tokens = [t.lower() for t in re.findall(r"[\wÀ-ỹ]{2,}", query) if t.lower() not in stop]
 
-    # Score từng câu
+    # Score từng đoạn văn
     scored = []
-    for s in sentences:
-        sl = s.lower()
-        score = sum(sl.count(t) for t in tokens)
-        # Boost câu có số liệu (thời hạn, %)
-        if re.search(r"\d+\s*(ngày|giờ|năm|tháng|%|triệu|tỷ|khoản|điều)", sl):
-            score += 3
-        if score > 0:
-            scored.append((score, s))
+    current_source = ""
+    
+    for p in paragraphs:
+        # Nhận diện nguồn để cộng điểm ngữ cảnh cho các đoạn bên dưới
+        if p.startswith("### Nguồn:"):
+            current_source = p.replace("### Nguồn:", "").strip()
+            continue
+        if p == "---":
+            continue
+            
+        pl = p.lower()
+        # Gộp dòng bị đứt (hard wrap) để đếm từ khóa chính xác hơn
+        pl_clean = re.sub(r'(?<!\n)\n(?!\n)', ' ', pl)
+        
+        # Thêm tên nguồn vào text để match số hiệu văn bản (vd: NghiDinh_356)
+        text_to_score = f"{current_source} {pl_clean}".lower()
+        
+        # Tính số lượng từ khóa KHÁC NHAU xuất hiện trong đoạn + tên nguồn
+        unique_matches = sum(1 for t in tokens if t in text_to_score)
+        
+        # Boost khổng lồ cho các từ khóa là số (ví dụ: 356, 200)
+        digit_boost = sum(100 for t in tokens if t.isdigit() and t in text_to_score)
+        
+        # Điểm phụ: Tần suất lặp lại để xếp hạng các đoạn có cùng số lượng từ khóa khác nhau
+        freq_score = sum(text_to_score.count(t) for t in tokens)
+        
+        score = (unique_matches * 20) + digit_boost + freq_score
+        
+        # Đoạn văn phải chứa ít nhất 1 từ khóa ý nghĩa (không phải số) để tránh nhận diện nhầm
+        meaningful_tokens = [t for t in tokens if not t.isdigit()]
+        has_meaningful = any(t in text_to_score for t in meaningful_tokens)
+        
+        if score > 0 and has_meaningful:
+            scored.append((score, p))
 
     scored.sort(key=lambda x: x[0], reverse=True)
-    top_sentences = [s for _, s in scored[:5]]
+    
+    # Chọn ra tối đa 2 đoạn văn tốt nhất
+    top_sentences = [p for _, p in scored[:2]]
 
     # Xác định nguồn luật từ context
     law_refs = []
     for pattern in [r"Nghị định \d+/\d+", r"Thông tư \d+/\d+", r"Điều \d+", r"Khoản \d+"]:
         found = re.findall(pattern, context)
         law_refs.extend(found[:2])
-    law_ref_str = ", ".join(dict.fromkeys(law_refs)[:3]) if law_refs else "các quy định hiện hành"
+    law_ref_str = ", ".join(list(dict.fromkeys(law_refs))[:3]) if law_refs else "các quy định hiện hành"
 
     if not top_sentences:
         return (

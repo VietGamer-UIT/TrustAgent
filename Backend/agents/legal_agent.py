@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from core.state import TrustAgentState
 from rag.retriever import get_legal_context
 from z3_engine.solver import LegalSolver
-import google.generativeai as genai
+from google import genai
 
 logger = logging.getLogger("trustagent.agents.legal")
 TEN_AGENT = "legal_agent"
@@ -23,8 +23,7 @@ def _extract_contract_data(contract_text: str) -> dict:
         return default_data
 
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+        client = genai.Client(api_key=api_key)
         
         prompt = f"""Bạn là hệ thống trích xuất dữ liệu hợp đồng chuyên nghiệp.
 Hãy đọc nội dung hợp đồng dưới đây và trả về định dạng JSON thuần túy.
@@ -36,7 +35,21 @@ Các trường bắt buộc:
 Nội dung hợp đồng:
 {contract_text}
 """
-        response = model.generate_content(prompt)
+        response = None
+        for m in ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.1-flash-lite"]:
+            try:
+                response = client.models.generate_content(
+                    model=m,
+                    contents=prompt,
+                )
+                if response and response.text:
+                    break
+            except Exception as e:
+                logger.warning(f"Lỗi {m}: {e}")
+                
+        if not response:
+            raise ValueError("All models failed")
+            
         result_text = response.text.strip()
         if result_text.startswith("```json"):
             result_text = result_text[7:-3].strip()

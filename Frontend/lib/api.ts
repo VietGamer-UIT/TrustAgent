@@ -11,8 +11,12 @@ import axios, { AxiosError } from 'axios'
  */
 function resolveApiBase(): string {
   if (typeof window !== 'undefined') {
-    const fromEnv = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, '')
-    if (fromEnv) return fromEnv
+    // Ưu tiên biến môi trường NEXT_PUBLIC_API_URL (bao gồm cả trường hợp rỗng để dùng relative proxy)
+    if (process.env.NEXT_PUBLIC_API_URL !== undefined) {
+      return process.env.NEXT_PUBLIC_API_URL === '/' 
+        ? '' 
+        : process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '')
+    }
 
     const { protocol, hostname } = window.location
     if (hostname.includes('.app.github.dev')) {

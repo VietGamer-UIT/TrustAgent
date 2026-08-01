@@ -53,3 +53,4 @@ Backend/audit_logs.json
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+Backend/forensics/rag/legal_data/.chroma_cache/
