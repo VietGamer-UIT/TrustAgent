@@ -5,15 +5,15 @@ def main():
     with open(val_file, "r", encoding="utf-8") as f:
         val_ids = set(json.load(f)["question_ids"])
         
-    train_file = r"data/scripts\train.jsonl"
+    train_file = r"data/scripts\dataset.jsonl"
     with open(train_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
         
     sft_train_records = [json.loads(line) for line in lines]
     
     # We need to map sft_train_records back to question_id.
-    # The original full train dataset is train.json
-    full_train_file = r"data/task2\train.json"
+    # The original full train dataset is dataset.json
+    full_train_file = r"data/sample\dataset.json"
     with open(full_train_file, "r", encoding="utf-8") as f:
         full_data = json.load(f)
         

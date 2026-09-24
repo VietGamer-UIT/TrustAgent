@@ -8,7 +8,7 @@ def main():
     results_dir = base_dir / "experiments" / "legalir" / "autonomous" / "results"
     
     # Load gold definition
-    train_file = base_dir.parent.parent / "Data Science Challenge 2026 (Task 1)" / "train.json"
+    train_file = base_dir.parent.parent / "sample_data" / "dataset.json"
     with open(train_file, "r", encoding="utf-8") as f:
         train_data = json.load(f)
         
@@ -111,7 +111,7 @@ def main():
         f.write(e2_loss_md)
         
     # 4. Compute H400_A Loss
-    h400_preds = base_dir / "experiments" / "legalir" / "autonomous" / "results" / "policy_h_oof_predictions.csv"
+    h400_preds = base_dir / "experiments" / "legalir" / "autonomous" / "results" / "policy_h_oof_results.csv"
     h400_df = pd.read_csv(h400_preds)
     h400_df['qid'] = h400_df['qid'].astype(str)
     h400_df['doc_id'] = h400_df['doc_id'].astype(str)

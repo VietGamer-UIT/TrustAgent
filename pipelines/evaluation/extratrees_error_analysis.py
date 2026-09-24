@@ -43,7 +43,7 @@ def main():
     results_dir = base_dir / "experiments" / "legalir" / "autonomous" / "results"
     
     # 1. Load basic validation data
-    train_file = base_dir.parent.parent / "Data Science Challenge 2026 (Task 1)" / "train.json"
+    train_file = base_dir.parent.parent / "sample_data" / "dataset.json"
     with open(train_file, "r", encoding="utf-8") as f:
         train_data = json.load(f)
         
@@ -76,8 +76,8 @@ def main():
         for item in e2_preds:
             e2_val_map[str(item["question_id"])] = [str(x) for x in item["predicted_articles"]]
 
-    # 4. Load H400_A predictions
-    h400_preds = results_dir / "policy_h_oof_predictions.csv"
+    # 4. Load H400_A model_outputs
+    h400_preds = results_dir / "policy_h_oof_results.csv"
     h400_df = pd.read_csv(h400_preds)
     h400_df['qid'] = h400_df['qid'].astype(str)
     h400_df['doc_id'] = h400_df['doc_id'].astype(str)

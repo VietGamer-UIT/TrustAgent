@@ -43,7 +43,7 @@ class LegalIRPipeline:
     ):
         self.data_dir = Path(data_dir)
         # Use the bqbbao6 DB by default since it has the valid HNSW index
-        self.db_dir = Path("D:/TrustAgent/Data Science Challenge 2026 (Task 1)/chroma_db_bqbbao6")
+        self.db_dir = Path("data/sample/chroma_db_bqbbao6")
         self.warmup_file = Path(warmup_file)
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -379,7 +379,7 @@ class LegalIRPipeline:
             return fallback, top_candidates
         return fallback
 
-    def evaluate_and_submit(self, mode: str = "eval", output_json: str = "submission.json", output_zip: str = "submission.zip"):
+    def evaluate_and_submit(self, mode: str = "eval", output_json: str = "output_results.json", output_zip: str = "output_results.zip"):
         console.print(f"[bold yellow][Step 2][/bold yellow] Bắt đầu quá trình ({mode.upper()})...")
         self.init_reranker()
         self.build_bm25_index()
@@ -471,16 +471,16 @@ class LegalIRPipeline:
             
             if mode == "submit":
                 with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                    zipf.write(output_json, arcname="submission.json")
+                    zipf.write(output_json, arcname="output_results.json")
                 console.print(f"Đã đóng gói thành công file: [bold green]{output_zip}[/bold green]")
         except Exception as e:
             traceback.print_exc()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_dir", type=str, default="D:/TrustAgent/Data Science Challenge 2026/selected-contexts")
-    parser.add_argument("--db_dir", type=str, default="D:/TrustAgent/Data Science Challenge 2026/chroma_db_legal_ir")
-    parser.add_argument("--warmup_file", type=str, default="D:/TrustAgent/Data Science Challenge 2026/warmup.json")
+    parser.add_argument("--data_dir", type=str, default="data/sample/corpus")
+    parser.add_argument("--db_dir", type=str, default="data/sample/chroma_db_legal_ir")
+    parser.add_argument("--warmup_file", type=str, default="data/sample/warmup.json")
     parser.add_argument("--chunk_size", type=int, default=2000)
     parser.add_argument("--chunk_overlap", type=int, default=400)
     parser.add_argument("--model_name", type=str, default="BAAI/bge-m3")
@@ -501,6 +501,6 @@ if __name__ == "__main__":
     # pipeline.offline_indexing() # Tạm thời tắt để không re-index lại ChromaDB
     pipeline.evaluate_and_submit(
         mode=args.mode,
-        output_json="D:/TrustAgent/Data Science Challenge 2026 (Task 1)/submission.json",
-        output_zip="D:/TrustAgent/Data Science Challenge 2026 (Task 1)/submission.zip"
+        output_json="data/sample/output_results.json",
+        output_zip="data/sample/output_results.zip"
     )

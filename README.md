@@ -16,14 +16,12 @@ TrustAgent was originally built to automate and verify complex document reasonin
 - **Legal Retrieval (RAG):** Retrieves relevant legal clauses to ground LLM responses in actual law.
 
 ### Extended Capabilities (HISTORICAL / REUSABLE ENGINEERING)
-During the UIT DSC 2026 development phase, TrustAgent was heavily extended with an advanced **LegalIR (Information Retrieval)** pipeline. While the competition-specific data and artifacts have been strictly excluded from this repository (see [Data Governance](DATA_GOVERNANCE.md)), the **reusable engineering components** have been retained. These include:
+TrustAgent's retrieval stack was extended through prior engineering work with an advanced **LegalIR (Information Retrieval)** pipeline. The **reusable engineering components** have been retained in `pipelines/`. These include:
 - Dense and BM25 lexical retrieval union.
 - Multi-chunk document scoring aggregation.
 - Cross-encoder reranking (e.g., using PEFT/LoRA).
 - Candidate generation and rank fusion frameworks.
 - Advanced evaluation utilities for retrieval performance.
-
-For deep dives into these engineering milestones, see [UIT DSC 2026 Engineering](UIT_DSC_2026_ENGINEERING.md).
 
 ---
 
@@ -90,9 +88,9 @@ npm run dev
 **Production vs. Experimental Data:**
 TrustAgent strictly separates production data from experimental or historical contest artifacts. 
 - The production database resides in `Backend/rag/chroma_db`. 
-- **NO** third-party contest datasets (including UIT DSC 2026 test/train/public/private data) are distributed, stored, or reconstructed in this repository.
+- **NO** third-party datasets (including historical test/train/public/private data) are distributed, stored, or reconstructed in this repository.
 
-For more details on our strict data isolation and artifact policy, see [DATA_GOVERNANCE.md](DATA_GOVERNANCE.md).
+For more details on our strict data isolation and artifact policy, see [SECURITY.md](SECURITY.md).
 
 ---
 

@@ -114,7 +114,7 @@ class BenchmarkLegalQA:
         os.makedirs("benchmark_results", exist_ok=True)
 
     def load_datasets(self):
-        train_file = Path(r"data/task2\train.json")
+        train_file = Path(r"data/sample\dataset.json")
         with open(train_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             
@@ -145,7 +145,7 @@ class BenchmarkLegalQA:
 
     def run_retrieval(self):
         # We define E00_FUNCTIONAL using bqbbao6 as the functional baseline DB
-        db_dir = r"data/task1\chroma_db_bqbbao6"
+        db_dir = r"data/sample\chroma_db_bqbbao6"
         embed_model_name = "bqbbao6/vietnamese-legal-embedding"
         
         # Rigorous Cache ID based on exact metadata
@@ -154,7 +154,7 @@ class BenchmarkLegalQA:
         val_ids_hash = hashlib.sha256(json.dumps(val_ids_list, sort_keys=True).encode("utf-8")).hexdigest()[:8]
         
         cache_state = {
-            "dataset": "train.json",
+            "dataset": "dataset.json",
             "embed_model": embed_model_name,
             "database": db_dir,
             "top_k_retrieval": self.top_k_retrieval,
@@ -299,7 +299,7 @@ class BenchmarkLegalQA:
         if self.args.length_bucketing:
             prompts.sort(key=lambda x: len(x[1]))
             
-        predictions = {}
+        model_outputs = {}
         
         torch.cuda.reset_peak_memory_stats()
         
@@ -343,7 +343,7 @@ class BenchmarkLegalQA:
                     gen_ids = outputs[j][inputs.input_ids.shape[1]:]
                     raw_ans = tokenizer.decode(gen_ids, skip_special_tokens=False)
                     ans = raw_ans.replace("<|im_end|>", "").strip()
-                    predictions[batch_qids[j]] = ans
+                    model_outputs[batch_qids[j]] = ans
                     
                 del inputs
                 del outputs
@@ -380,12 +380,12 @@ class BenchmarkLegalQA:
         
         # Coverage assertion
         expected_ids = set(self.val_data.keys())
-        actual_ids = set(predictions.keys())
+        actual_ids = set(model_outputs.keys())
         missing = expected_ids - actual_ids
         extra = actual_ids - expected_ids
-        assert not missing, f"Missing predictions for IDs: {missing}"
-        assert not extra, f"Extra predictions for IDs: {extra}"
-        assert len(predictions) == len(expected_ids)
+        assert not missing, f"Missing model_outputs for IDs: {missing}"
+        assert not extra, f"Extra model_outputs for IDs: {extra}"
+        assert len(model_outputs) == len(expected_ids)
         end_time = time.time()
         
         # Calculate metrics
@@ -414,7 +414,7 @@ class BenchmarkLegalQA:
             if block_name not in blocks:
                 blocks[block_name] = {"meteor": 0.0, "rougeL": 0.0, "count": 0}
             
-            ans = predictions.get(q_id, "")
+            ans = model_outputs.get(q_id, "")
             ref = self.val_data[q_id]["answer"]
             
             norm_ref = preprocess_text(ref)
@@ -458,7 +458,7 @@ class BenchmarkLegalQA:
                 "meteor": m_score,
                 "rougeL": r_score,
                 "reference_length": len(norm_ref.split()),
-                "prediction_length": rep_stats["answer_length"],
+                "model_output_length": rep_stats["answer_length"],
                 "repetition_ratio": rep_stats["unique_bigram_ratio"]
             })
 
@@ -519,17 +519,17 @@ class BenchmarkLegalQA:
         with open(hash_json, "w", encoding="utf-8") as f:
             json.dump(prompt_hashes, f, indent=4)
             
-        # Write predictions for inspection
-        pred_json = f"benchmark_results/{self.experiment}_limit{self.limit}_predictions.json"
+        # Write model_outputs for inspection
+        pred_json = f"benchmark_results/{self.experiment}_limit{self.limit}_results.json"
         with open(pred_json, "w", encoding="utf-8") as f:
-            json.dump(predictions, f, ensure_ascii=False, indent=4)
+            json.dump(model_outputs, f, ensure_ascii=False, indent=4)
             
         # Write per-sample metrics
         per_sample_json = f"benchmark_results/{self.experiment}_limit{self.limit}_persample.json"
         with open(per_sample_json, "w", encoding="utf-8") as f:
             json.dump(per_sample_metrics, f, ensure_ascii=False, indent=4)
             
-        console.print(f"[bold green]Saved metrics to {out_json}, predictions to {pred_json}, per-sample to {per_sample_json}[/bold green]")
+        console.print(f"[bold green]Saved metrics to {out_json}, model_outputs to {pred_json}, per-sample to {per_sample_json}[/bold green]")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

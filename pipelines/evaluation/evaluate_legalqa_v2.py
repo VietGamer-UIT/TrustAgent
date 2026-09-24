@@ -60,7 +60,7 @@ class LegalQAEvaluator:
             self.run_generation_phase()
         
     def load_datasets(self):
-        train_file = Path(r"data/task2\train.json")
+        train_file = Path(r"data/sample\dataset.json")
         with open(train_file, "r", encoding="utf-8") as f:
             data = json.load(f)
         items = list(data.items())
@@ -100,7 +100,7 @@ class LegalQAEvaluator:
 
     def run_retrieval_phase(self):
         console.print("[bold blue]=== PHASE 1: RETRIEVAL ===[/bold blue]")
-        db_dir = r"data/task1\chroma_db_bqbbao6"
+        db_dir = r"data/sample\chroma_db_bqbbao6"
         chroma_client = chromadb.PersistentClient(path=db_dir)
         collection = chroma_client.get_collection(name="legal_ir")
         
@@ -183,7 +183,7 @@ class LegalQAEvaluator:
             console.print(f"Loading LoRA {self.model_path}...")
             model = PeftModel.from_pretrained(model, self.model_path)
             
-        predictions = {}
+        model_outputs = {}
         total_meteor = 0.0
         total_rougeL = 0.0
         q_ids = list(self.val_data.keys())
@@ -230,11 +230,11 @@ class LegalQAEvaluator:
                 gen_ids = gen_out[j][prompt_len:]
                 raw_ans = tokenizer.decode(gen_ids, skip_special_tokens=False)
                 ans = raw_ans.replace("<|im_end|>", "").strip()
-                predictions[q_id] = {"answer": ans}
+                model_outputs[q_id] = {"answer": ans}
                 
         # Calculate metrics
         for q_id in q_ids:
-            ans = predictions[q_id]["answer"]
+            ans = model_outputs[q_id]["answer"]
             ref = self.val_data[q_id]["answer"]
             norm_ref = preprocess_text(ref)
             norm_gen = preprocess_text(ans)
@@ -250,9 +250,9 @@ class LegalQAEvaluator:
         console.print(f"METEOR: {total_meteor/total:.4f}")
         console.print(f"ROUGE-L: {total_rougeL/total:.4f}")
         
-        out_json = f"{self.experiment_id}_predictions.json"
+        out_json = f"{self.experiment_id}_results.json"
         with open(out_json, "w", encoding="utf-8") as f:
-            json.dump(predictions, f, ensure_ascii=False, indent=4)
+            json.dump(model_outputs, f, ensure_ascii=False, indent=4)
         
         del model
         gc.collect()

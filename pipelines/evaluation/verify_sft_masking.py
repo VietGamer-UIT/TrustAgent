@@ -99,8 +99,8 @@ def main():
     if not tokenizer.pad_token:
         tokenizer.pad_token = tokenizer.eos_token
         
-    # Read a sample from train.jsonl
-    with open(r"data/train.jsonl", "r", encoding="utf-8") as f:
+    # Read a sample from dataset.jsonl
+    with open(r"data/dataset.jsonl", "r", encoding="utf-8") as f:
         sample_json = json.loads(f.readline())
         
     messages = sample_json["messages"]

@@ -13,7 +13,7 @@ def main():
     with open(val_file, "r", encoding="utf-8") as f:
         val_qids = set(json.load(f))
         
-    train_file = base_dir.parent.parent / "Data Science Challenge 2026 (Task 1)" / "train.json"
+    train_file = base_dir.parent.parent / "sample_data" / "dataset.json"
     with open(train_file, "r", encoding="utf-8") as f:
         train_data = json.load(f)
         
@@ -29,7 +29,7 @@ def main():
     embed_model = SentenceTransformer("bqbbao6/vietnamese-legal-embedding")
     
     print("Loading ChromaDB...")
-    db_dir = r"data/task1\chroma_db_bqbbao6"
+    db_dir = r"data/sample\chroma_db_bqbbao6"
     client = chromadb.PersistentClient(path=db_dir)
     collection = client.get_collection(name="legal_ir")
     
@@ -55,7 +55,7 @@ def main():
     # BM25 retrieval
     print("Loading BM25 index...")
     # Read corpus
-    corpus_file = base_dir.parent.parent / "Data Science Challenge 2026 (Task 1)" / "corpus.json"
+    corpus_file = base_dir.parent.parent / "sample_data" / "corpus.json"
     with open(corpus_file, "r", encoding="utf-8") as f:
         corpus_data = json.load(f)
         

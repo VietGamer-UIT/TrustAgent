@@ -3,7 +3,7 @@ import random
 from pathlib import Path
 
 def main():
-    train_file = Path(r"data/task2\train.json")
+    train_file = Path(r"data/sample\dataset.json")
     with open(train_file, "r", encoding="utf-8") as f:
         data = json.load(f)
         

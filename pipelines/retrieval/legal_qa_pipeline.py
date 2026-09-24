@@ -113,7 +113,7 @@ class LegalQAPipeline:
         self.rouge = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=False)
 
         # 5. Load Train Data for Dynamic Few-Shot
-        train_file_path = Path("D:/TrustAgent/Data Science Challenge 2026 (Task 2)/train.json")
+        train_file_path = Path("data/sample/dataset.json")
         console.print(f"[bold blue][Info][/bold blue] Đang tải train data để làm Dynamic Few-Shot ({train_file_path})...")
         try:
             with open(train_file_path, "r", encoding="utf-8") as f:
@@ -229,7 +229,7 @@ class LegalQAPipeline:
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
-    def evaluate_and_submit(self, output_json: str = "submission.json", output_zip: str = "submission.zip", use_mock_context: bool = False):
+    def evaluate_and_submit(self, output_json: str = "output_results.json", output_zip: str = "output_results.zip", use_mock_context: bool = False):
         console.print("\n[bold yellow][Bắt đầu LegalQA Pipeline (Local LLM)][/bold yellow]")
         if not self.warmup_file.exists():
             console.print(f"[bold red]Lỗi:[/bold red] Không tìm thấy tập {self.warmup_file}.")
@@ -321,7 +321,7 @@ class LegalQAPipeline:
             
             # Nén ZIP chuẩn CodaLab
             with zipfile.ZipFile(output_zip, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                zipf.write(output_json, arcname="submission.json")
+                zipf.write(output_json, arcname="output_results.json")
             console.print(f"Đã đóng gói thành công file: [bold green]{output_zip}[/bold green]")
             
         except Exception as e:
@@ -330,14 +330,14 @@ class LegalQAPipeline:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="UIT-DSC 2026 - Task 2: LegalQA Pipeline (Local LLM)")
-    parser.add_argument("--db_dir", type=str, default="D:/TrustAgent/Data Science Challenge 2026/chroma_db_legal_ir", help="Directory of ChromaDB from Task 1")
-    parser.add_argument("--warmup_file", type=str, default="D:/TrustAgent/Data Science Challenge 2026 (Task 2)/warmup.json", help="Path to warmup JSON file for Task 2")
+    parser.add_argument("--db_dir", type=str, default="data/sample/chroma_db_legal_ir", help="Directory of ChromaDB from Task 1")
+    parser.add_argument("--warmup_file", type=str, default="data/sample/warmup.json", help="Path to warmup JSON file for Task 2")
     parser.add_argument("--model_name", type=str, default="BAAI/bge-m3", help="Embedding model name")
     parser.add_argument("--llm_model", type=str, default="Qwen/Qwen2.5-3B-Instruct", help="Local LLM model name (<4B Params)")
     
     parser.add_argument("--use_mock_context", action="store_true", help="Use reference answer as mock context to test generation speed")
-    parser.add_argument("--output_json", type=str, default="D:/TrustAgent/Data Science Challenge 2026 (Task 2)/submission.json", help="Path to output JSON")
-    parser.add_argument("--output_zip", type=str, default="D:/TrustAgent/Data Science Challenge 2026 (Task 2)/submission.zip", help="Path to output ZIP")
+    parser.add_argument("--output_json", type=str, default="data/sample/output_results.json", help="Path to output JSON")
+    parser.add_argument("--output_zip", type=str, default="data/sample/output_results.zip", help="Path to output ZIP")
     
     args = parser.parse_args()
     

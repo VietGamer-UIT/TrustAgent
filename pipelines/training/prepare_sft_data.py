@@ -11,9 +11,9 @@ console = Console()
 
 def main():
     # Paths
-    train_file = Path(r"data/task2\train.json")
-    db_dir = Path(r"data/task1\chroma_db_bqbbao6")
-    out_train = Path(r"data/scripts\train.jsonl")
+    train_file = Path(r"data/sample\dataset.json")
+    db_dir = Path(r"data/sample\chroma_db_bqbbao6")
+    out_train = Path(r"data/scripts\dataset.jsonl")
     out_val = Path(r"data/scripts\val.jsonl")
     
     # Load data

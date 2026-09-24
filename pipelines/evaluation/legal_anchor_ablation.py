@@ -5,7 +5,7 @@ from pathlib import Path
 from sklearn.model_selection import GroupKFold
 from sklearn.ensemble import ExtraTreesClassifier
 
-def evaluate_predictions(val_df, pred_col, golds_in_pool, tie_col='rrf_rank'):
+def evaluate_model_outputs(val_df, pred_col, golds_in_pool, tie_col='rrf_rank'):
     hits_at_k = {1: 0, 3: 0, 5: 0, 10: 0}
     precision_hits_5 = 0
     num_queries = val_df['qid'].nunique()
@@ -14,7 +14,7 @@ def evaluate_predictions(val_df, pred_col, golds_in_pool, tie_col='rrf_rank'):
     candidate_misses = 0
     ranking_misses = 0
     
-    predictions = {}
+    model_outputs = {}
     
     for qid, group in val_df.groupby('qid'):
         sorted_group = group.sort_values([pred_col, tie_col], ascending=[False, True])
@@ -43,7 +43,7 @@ def evaluate_predictions(val_df, pred_col, golds_in_pool, tie_col='rrf_rank'):
         else:
             ranking_misses += 1
             
-        predictions[qid] = {
+        model_outputs[qid] = {
             "top5": top10_docs[:5], 
             "top10": top10_docs,
             "scores": sorted_group[pred_col].head(10).tolist(),
@@ -59,7 +59,7 @@ def evaluate_predictions(val_df, pred_col, golds_in_pool, tie_col='rrf_rank'):
         'hits': hits,
         'candidate_misses': candidate_misses,
         'ranking_misses': ranking_misses,
-        'predictions': predictions
+        'model_outputs': model_outputs
     }
     return metrics
 
@@ -94,14 +94,14 @@ def run_experiment(df, feature_cols, golds_in_pool, num_queries):
     df_eval = df[['qid', 'doc_id', 'rrf_rank']].copy()
     df_eval['pred'] = oof_preds
     
-    return evaluate_predictions(df_eval, 'pred', golds_in_pool)
+    return evaluate_model_outputs(df_eval, 'pred', golds_in_pool)
 
 def main():
     base_dir = Path(r"data/competition")
     results_dir = base_dir / "experiments" / "legalir" / "autonomous" / "results"
     
     # 1. Load Data
-    train_file = base_dir.parent.parent / "Data Science Challenge 2026 (Task 1)" / "train.json"
+    train_file = base_dir.parent.parent / "sample_data" / "dataset.json"
     with open(train_file, "r", encoding="utf-8") as f:
         train_data = json.load(f)
         
@@ -164,8 +164,8 @@ def main():
     delta_p5 = best_res['P@5'] - res_la0['P@5']
     
     # Compare queries
-    base_preds = res_la0['predictions']
-    best_preds = best_res['predictions']
+    base_preds = res_la0['model_outputs']
+    best_preds = best_res['model_outputs']
     
     recovered = []
     lost = []

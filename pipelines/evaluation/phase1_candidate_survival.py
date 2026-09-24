@@ -15,7 +15,7 @@ def main():
         else:
             val_qids = val_data_manifest
             
-    train_file = base_dir.parent.parent / "Data Science Challenge 2026 (Task 1)" / "train.json"
+    train_file = base_dir.parent.parent / "sample_data" / "dataset.json"
     with open(train_file, "r", encoding="utf-8") as f:
         train_data = json.load(f)
         
@@ -101,9 +101,9 @@ def main():
         writer.writeheader()
         writer.writerows(matrix)
         
-    # We need to know ranking miss: gold in rrf500 but not in top 5 of E2 predictions
-    # Wait, H400_A was saved in policy_h_oof_predictions.csv
-    e2_preds_file = base_dir / "experiments" / "legalir" / "autonomous" / "results" / "policy_h_oof_predictions.csv"
+    # We need to know ranking miss: gold in rrf500 but not in top 5 of E2 model_outputs
+    # Wait, H400_A was saved in policy_h_oof_results.csv
+    e2_preds_file = base_dir / "experiments" / "legalir" / "autonomous" / "results" / "policy_h_oof_results.csv"
     if e2_preds_file.exists():
         preds_df = pd.read_csv(e2_preds_file)
         preds_df['doc_id'] = preds_df['doc_id'].astype(str)
@@ -122,7 +122,7 @@ def main():
                 ranking_misses += 1
     else:
         ranking_misses = 0
-        print("Warning: policy_h_oof_predictions.csv not found, ranking_misses set to 0")
+        print("Warning: policy_h_oof_results.csv not found, ranking_misses set to 0")
             
     # Phase 2
     n_queries = len(matrix)
