@@ -43,7 +43,7 @@ class LegalIRPipeline:
     ):
         self.data_dir = Path(data_dir)
         # Use the bqbbao6 DB by default since it has the valid HNSW index
-        self.db_dir = Path("data/sample/chroma_db_bqbbao6")
+        self.db_dir = Path(os.environ.get("DB_DIR", "chroma_db"))
         self.warmup_file = Path(warmup_file)
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
@@ -478,9 +478,9 @@ class LegalIRPipeline:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_dir", type=str, default="data/sample/corpus")
-    parser.add_argument("--db_dir", type=str, default="data/sample/chroma_db_legal_ir")
-    parser.add_argument("--warmup_file", type=str, default="data/sample/warmup.json")
+    parser.add_argument("--data_dir", type=str, required=True, help="Path to corpus directory")
+    parser.add_argument("--db_dir", type=str, required=True, help="Path to ChromaDB directory")
+    parser.add_argument("--warmup_file", type=str, required=True, help="Path to warmup dataset")
     parser.add_argument("--chunk_size", type=int, default=2000)
     parser.add_argument("--chunk_overlap", type=int, default=400)
     parser.add_argument("--model_name", type=str, default="BAAI/bge-m3")
@@ -501,6 +501,6 @@ if __name__ == "__main__":
     # pipeline.offline_indexing() # Tạm thời tắt để không re-index lại ChromaDB
     pipeline.evaluate_and_submit(
         mode=args.mode,
-        output_json="data/sample/output_results.json",
-        output_zip="data/sample/output_results.zip"
+        output_json="output_results.json",
+        output_zip="output_results.zip"
     )

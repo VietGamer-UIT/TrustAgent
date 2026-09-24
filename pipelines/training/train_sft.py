@@ -98,7 +98,7 @@ def main():
     os.environ["HF_HOME"] = "E:/data-hf_cache"
     
     # Paths
-    train_file = r"data/scripts\dataset.jsonl"
+    train_file = os.environ.get("SFT_TRAIN_FILE", "dataset.jsonl")
     output_dir = r"models\qwen1.5b-legalqa-sft-v3"
     model_id = "Qwen/Qwen2.5-1.5B-Instruct"
     

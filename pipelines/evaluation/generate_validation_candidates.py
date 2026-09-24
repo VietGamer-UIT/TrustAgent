@@ -1,3 +1,4 @@
+import os
 import json
 import numpy as np
 from pathlib import Path
@@ -29,7 +30,7 @@ def main():
     embed_model = SentenceTransformer("bqbbao6/vietnamese-legal-embedding")
     
     print("Loading ChromaDB...")
-    db_dir = r"data/sample\chroma_db_bqbbao6"
+    db_dir = os.environ.get("DB_DIR", "chroma_db")
     client = chromadb.PersistentClient(path=db_dir)
     collection = client.get_collection(name="legal_ir")
     

@@ -11,10 +11,10 @@ console = Console()
 
 def main():
     # Paths
-    train_file = Path(r"data/sample\dataset.json")
-    db_dir = Path(r"data/sample\chroma_db_bqbbao6")
-    out_train = Path(r"data/scripts\dataset.jsonl")
-    out_val = Path(r"data/scripts\val.jsonl")
+    train_file = Path(os.environ.get("DATASET_PATH", "dataset.json"))
+    db_dir = Path(os.environ.get("DB_DIR", "chroma_db"))
+    out_train = Path(os.environ.get("SFT_TRAIN_FILE", "dataset.jsonl"))
+    out_val = Path(os.environ.get("SFT_VAL_FILE", "val.jsonl"))
     
     # Load data
     console.print("[bold blue]Loading train data...[/bold blue]")

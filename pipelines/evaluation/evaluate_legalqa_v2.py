@@ -60,7 +60,7 @@ class LegalQAEvaluator:
             self.run_generation_phase()
         
     def load_datasets(self):
-        train_file = Path(r"data/sample\dataset.json")
+        train_file = Path(os.environ.get("DATASET_PATH", "dataset.json"))
         with open(train_file, "r", encoding="utf-8") as f:
             data = json.load(f)
         items = list(data.items())
@@ -100,7 +100,7 @@ class LegalQAEvaluator:
 
     def run_retrieval_phase(self):
         console.print("[bold blue]=== PHASE 1: RETRIEVAL ===[/bold blue]")
-        db_dir = r"data/sample\chroma_db_bqbbao6"
+        db_dir = os.environ.get("DB_DIR", "chroma_db")
         chroma_client = chromadb.PersistentClient(path=db_dir)
         collection = chroma_client.get_collection(name="legal_ir")
         

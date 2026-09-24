@@ -114,7 +114,7 @@ class BenchmarkLegalQA:
         os.makedirs("benchmark_results", exist_ok=True)
 
     def load_datasets(self):
-        train_file = Path(r"data/sample\dataset.json")
+        train_file = Path(os.environ.get("DATASET_PATH", "dataset.json"))
         with open(train_file, "r", encoding="utf-8") as f:
             data = json.load(f)
             
@@ -145,7 +145,7 @@ class BenchmarkLegalQA:
 
     def run_retrieval(self):
         # We define E00_FUNCTIONAL using bqbbao6 as the functional baseline DB
-        db_dir = r"data/sample\chroma_db_bqbbao6"
+        db_dir = os.environ.get("DB_DIR", "chroma_db")
         embed_model_name = "bqbbao6/vietnamese-legal-embedding"
         
         # Rigorous Cache ID based on exact metadata

@@ -113,7 +113,7 @@ class LegalQAPipeline:
         self.rouge = rouge_scorer.RougeScorer(['rougeL'], use_stemmer=False)
 
         # 5. Load Train Data for Dynamic Few-Shot
-        train_file_path = Path("data/sample/dataset.json")
+        train_file_path = Path(os.environ.get("DATASET_PATH", "dataset.json"))
         console.print(f"[bold blue][Info][/bold blue] Đang tải train data để làm Dynamic Few-Shot ({train_file_path})...")
         try:
             with open(train_file_path, "r", encoding="utf-8") as f:
@@ -330,14 +330,14 @@ class LegalQAPipeline:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="UIT-DSC 2026 - Task 2: LegalQA Pipeline (Local LLM)")
-    parser.add_argument("--db_dir", type=str, default="data/sample/chroma_db_legal_ir", help="Directory of ChromaDB from Task 1")
-    parser.add_argument("--warmup_file", type=str, default="data/sample/warmup.json", help="Path to warmup JSON file for Task 2")
+    parser.add_argument("--db_dir", type=str, required=True, help="Directory of ChromaDB from Task 1")
+    parser.add_argument("--warmup_file", type=str, required=True, help="Path to warmup JSON file for Task 2")
     parser.add_argument("--model_name", type=str, default="BAAI/bge-m3", help="Embedding model name")
     parser.add_argument("--llm_model", type=str, default="Qwen/Qwen2.5-3B-Instruct", help="Local LLM model name (<4B Params)")
     
     parser.add_argument("--use_mock_context", action="store_true", help="Use reference answer as mock context to test generation speed")
-    parser.add_argument("--output_json", type=str, default="data/sample/output_results.json", help="Path to output JSON")
-    parser.add_argument("--output_zip", type=str, default="data/sample/output_results.zip", help="Path to output ZIP")
+    parser.add_argument("--output_json", type=str, default="output_results.json", help="Path to output JSON")
+    parser.add_argument("--output_zip", type=str, default="output_results.zip", help="Path to output ZIP")
     
     args = parser.parse_args()
     

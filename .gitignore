@@ -47,3 +47,16 @@ Frontend/.env.production
 # OS Files
 .DS_Store
 
+
+# Runtime Artifacts
+prompt_cache/
+benchmark_results/
+eval_debug.json
+submission_partial.json
+output_results.json
+output_results.zip
+model_outputs/
+results.json
+results.csv
+oof_results.csv
+policy_h_oof_results.csv

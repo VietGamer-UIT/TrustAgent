@@ -1,11 +1,12 @@
+import os
 import json
 
 def main():
-    val_file = r"data/scripts\validation_200_ids.json"
+    val_file = os.environ.get("VAL_IDS_PATH", "validation_200_ids.json")
     with open(val_file, "r", encoding="utf-8") as f:
         val_ids = set(json.load(f)["question_ids"])
         
-    train_file = r"data/scripts\dataset.jsonl"
+    train_file = os.environ.get("SFT_TRAIN_FILE", "dataset.jsonl")
     with open(train_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
         
@@ -13,7 +14,7 @@ def main():
     
     # We need to map sft_train_records back to question_id.
     # The original full train dataset is dataset.json
-    full_train_file = r"data/sample\dataset.json"
+    full_train_file = os.environ.get("DATASET_PATH", "dataset.json")
     with open(full_train_file, "r", encoding="utf-8") as f:
         full_data = json.load(f)
         

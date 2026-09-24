@@ -1,9 +1,10 @@
+import os
 import json
 import random
 from pathlib import Path
 
 def main():
-    train_file = Path(r"data/sample\dataset.json")
+    train_file = Path(os.environ.get("DATASET_PATH", "dataset.json"))
     with open(train_file, "r", encoding="utf-8") as f:
         data = json.load(f)
         
@@ -22,7 +23,7 @@ def main():
     
     question_ids = [k for k, v in val_items]
     
-    out_file = r"data/scripts\validation_200_ids.json"
+    out_file = os.environ.get("VAL_IDS_PATH", "validation_200_ids.json")
     result = {
         "seed": 42,
         "sample_count": len(question_ids),
