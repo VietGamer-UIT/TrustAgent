@@ -43,7 +43,7 @@ class LegalIRPipeline:
     ):
         self.data_dir = Path(data_dir)
         # Use the bqbbao6 DB by default since it has the valid HNSW index
-        self.db_dir = Path(os.environ.get("DB_DIR", "chroma_db"))
+        self.db_dir = Path(os.environ.get("DB_DIR", db_dir))
         self.warmup_file = Path(warmup_file)
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
