@@ -1,60 +1,49 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-build/
-dist/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual env
+# Environments
+.env
 .venv/
 venv/
-env/
-ENV/
+venv_cuda/
+__pycache__/
+*.pyc
 
-# Secrets
-.env
-.env.local
-
-# Database
-Backend/*.db
-*.db
-Backend/rag/chroma_db/
-Backend/forensics/rag/.chroma_cache/
-
-# Node / Next.js
-node_modules/
-Frontend/.next/
-Frontend/out/
-
-# IDE / OS
-.idea/
+# IDEs
 .vscode/
-*.swp
-.DS_Store
-Thumbs.db
+.idea/
 
-# Logs / cache
+# Caches and ML artifacts
+cache/
+caches/
+*.pkl
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.ckpt
+
+# Output and temp files
+scratch/
+output/
 *.log
-*.json
-!package.json
-!package-lock.json
-!tsconfig.json
-!Frontend/package.json
-!Frontend/package-lock.json
-!Frontend/tsconfig.json
-!Frontend/tailwind.config.js
-!Frontend/next.config.js
-Backend/audit_logs.json
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-Backend/forensics/rag/legal_data/.chroma_cache/
+*.zip
 
-Data Science Challenge 2026/
+# Node
+node_modules/
+.next/
 
-Data Science Challenge 2026 (Task 2)/
+# Exclude generated predictions / competition artifacts
+predictions*.json
+submission*.zip
+submission.json
+
+# Local Databases (Protect Production DB)
+chroma_db/
+*.sqlite
+*.sqlite3
+*.db
+
+# Frontend environments
+Frontend/.env.local
+Frontend/.env.production
+# OS Files
+.DS_Store
+
